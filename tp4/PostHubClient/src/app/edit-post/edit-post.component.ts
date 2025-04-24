@@ -52,16 +52,18 @@ export class EditPostComponent {
     
     let i = 1;
     let formData = new FormData();
+    formData.append("title", this.postTitle);
+    formData.append("text", this.postText);
     for(let f of this.pictureInput.nativeElement.files){
       formData.append("image" + i, f, f.name);
       i++;
-    }
+    }  
 
 
-    let postDTO = {
-      title : this.postTitle,
-      text : this.postText
-    };
+    //let postDTO = {
+    //   title : this.postTitle,
+    //   text : this.postText
+    //};
 
     let newPost : Post = await this.postService.postPost(this.hub.id, formData);
 

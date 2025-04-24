@@ -6,6 +6,8 @@ using PostHubServer.Models;
 using PostHubServer.Models.DTOs;
 using PostHubServer.Services;
 using System.Security.Claims;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace PostHubServer.Controllers
 {
@@ -30,26 +32,55 @@ namespace PostHubServer.Controllers
         // et le post lui-même.
         [HttpPost("{hubId}")]
         [Authorize]
-        public async Task<ActionResult<PostDisplayDTO>> PostPost(int hubId, PostDTO postDTO)
+        public async Task<ActionResult<Picture>> PostPost(int hubId, PostDTO postDTO)
         {
+            try
+            {
+                IFormCollection formCollection = await Request.ReadFormAsync();
+                IFormFile? file = formCollection.Files.GetFile("monImage");
 
-            User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            if (user == null) return Unauthorized();
+                if (file == null) return BadRequest(new { Message = "Fournis une image" });
 
-            Hub? hub = await _hubService.GetHub(hubId);
-            if (hub == null) return NotFound();
+                Image image = Image.Load(file.OpenReadStream());
 
-            Comment? mainComment = await _commentService.CreateComment(user, postDTO.Text, null);
-            if (mainComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
+                Picture pi = new Picture
+                {
+                    Id = 0,
+                    FileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName),
+                    MimeType = file.ContentType
+                };
 
-            Post? post = await _postService.CreatePost(postDTO.Title, hub, mainComment);
-            if (post == null) return StatusCode(StatusCodes.Status500InternalServerError);
+                image.Save(Directory.GetCurrentDirectory() + "/images/big/" + pi.FileName);
 
-            bool voteToggleSuccess = await _commentService.UpvoteComment(mainComment.Id, user);
-            if (!voteToggleSuccess) return StatusCode(StatusCodes.Status500InternalServerError);
+                image.Mutate(i => i.Resize(
+                    new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }));
+                image.Save(Directory.GetCurrentDirectory() + "/images/smol" + pi.FileName);
 
-            return Ok(new PostDisplayDTO(post, true, user));
+                User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                if (user == null) return Unauthorized();
+
+                Hub? hub = await _hubService.GetHub(hubId);
+                if (hub == null) return NotFound();
+
+                Comment? mainComment = await _commentService.CreateComment(user, postDTO.Text, null);
+                if (mainComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
+
+                Post? post = await _postService.CreatePost(postDTO.Title, hub, mainComment, pi);
+                if (post == null) return StatusCode(StatusCodes.Status500InternalServerError);
+
+                bool voteToggleSuccess = await _commentService.UpvoteComment(mainComment.Id, user);
+                if (!voteToggleSuccess) return StatusCode(StatusCodes.Status500InternalServerError);
+
+                return Ok(new PostDisplayDTO(post, true, user));
+            }
+
+
+            catch (Exception)
+            {
+                throw;
+            }
         }
+           
 
         /// <summary>
         /// Obtenir une list de posts selon certains critères

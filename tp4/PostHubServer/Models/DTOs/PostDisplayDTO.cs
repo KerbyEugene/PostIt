@@ -11,6 +11,9 @@
         public int HubId { get; set; }
         public string HubName { get; set; } = null!;
         public CommentDisplayDTO MainComment { get; set; } = null!;
+        // Tous les id d'images
+
+
 
 
         public PostDisplayDTO() { }
@@ -20,7 +23,7 @@
             Title = post.Title;
             MainComment = new CommentDisplayDTO(post.MainComment!, withSubComments, user);
             HubName = post.Hub!.Name;
-            HubId = post.Hub!.Id;
+            HubId = post.Hub!.Id;                      
         }
     }
 }
