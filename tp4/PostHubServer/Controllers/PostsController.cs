@@ -32,6 +32,7 @@ namespace PostHubServer.Controllers
         [Authorize]
         public async Task<ActionResult<PostDisplayDTO>> PostPost(int hubId, PostDTO postDTO)
         {
+
             User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             if (user == null) return Unauthorized();
 
