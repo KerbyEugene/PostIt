@@ -33,6 +33,9 @@ namespace PostHubServer.Services
                 Date = DateTime.UtcNow,
                 User = user, // Auteur
                 ParentComment = parentComment, // null si commentaire principal du post
+
+                // Remplir la liste de photos
+               // pictures=picture
             };
 
             _context.Comments.Add(newComment);
