@@ -1,9 +1,9 @@
 
-import { Component, Input } from '@angular/core';
+import { Component, ElementRef, Input, ViewChild } from '@angular/core';
 import { faDownLong, faEllipsis, faImage, faL, faMessage, faUpLong, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { CommentService } from '../services/comment.service';
 import { Comment } from '../models/comment';
-import { CommonModule } from '@angular/common';
+import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 
@@ -37,6 +37,7 @@ export class CommentComponent {
   // Variables associées à des inputs
   newComment : string = "";
   editedText ?: string;
+  @ViewChild("myFileInput", {static : false}) pictureInput ?: ElementRef;
 
   constructor(public commentService : CommentService) { }
 
@@ -57,11 +58,16 @@ export class CommentComponent {
     if(this.comment == null) return;
     if(this.comment.subComments == null) this.comment.subComments = [];
 
-    let commentDTO = {
-      text : this.newComment
-    }
+   let formData= new FormData();
+   let i=1;
+   formData.append("text",this.newComment);
+   for (let file of this.pictureInput?.nativeElement.files)
+    {
+    formData.append("monImage"+i, file, file.name); 
+    i++;
+   }
 
-    this.comment.subComments.push(await this.commentService.postComment(commentDTO, this.comment.id));
+    this.comment.subComments.push(await this.commentService.postComment(formData, this.comment.id));
     
     this.replyToggle = false;
     this.repliesToggle = true;
