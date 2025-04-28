@@ -1,5 +1,7 @@
 ﻿using PostHubServer.Data;
 using PostHubServer.Models;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace PostHubServer.Services
 {
@@ -22,7 +24,7 @@ namespace PostHubServer.Services
 
         // Créer un commentaire (possiblement le commentaire principal d'un post, mais pas forcément)
         // Un commentaire parent peut être fourni si le commentaire créé est un sous-commentaire
-        public async Task<Comment?> CreateComment(User user, string text, Comment? parentComment)
+        public async Task<Comment?> CreateComment(User user, string text, Comment? parentComment, List<IFormFile> uploadedPictures)
         {
             if (IsContextNull()) return null;
 
@@ -35,9 +37,35 @@ namespace PostHubServer.Services
                 ParentComment = parentComment, // null si commentaire principal du post
 
                 // Remplir la liste de photos
-               // pictures=picture
+                pictures = new List<Picture>(),
             };
+            foreach (var file in uploadedPictures)
+            {
+                if (file != null && file.Length > 0)
+                {
+                    Image image = Image.Load(file.OpenReadStream());
 
+                    Picture picture = new Picture
+                    {
+                        Id = 0,
+                        FileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName),
+                        MimeType = file.ContentType
+                    };
+
+                    
+                    string fullPath = Path.Combine(Directory.GetCurrentDirectory(), "images/full", picture.FileName);
+                    string thumbPath = Path.Combine(Directory.GetCurrentDirectory(), "images/thumbnail", picture.FileName);
+
+                    image.Save(fullPath);
+
+                    image.Mutate(i => i.Resize(
+                        new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }
+                    ));
+                    image.Save(thumbPath);
+
+                    newComment.pictures.Add(picture);
+                }
+            }
             _context.Comments.Add(newComment);
             await _context.SaveChangesAsync();
 

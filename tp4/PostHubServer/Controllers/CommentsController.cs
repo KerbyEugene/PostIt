@@ -31,54 +31,21 @@ namespace PostHubServer.Controllers
         // voir l'action PostPost dans PostsController)
         [HttpPost("{parentCommentId}")]
         [Authorize]
-        public async Task<ActionResult<CommentDisplayDTO>> PostComment(int parentCommentId, CommentDTO commentDTO)
+        public async Task<ActionResult<CommentDisplayDTO>> PostComment(int parentCommentId)
         {
             User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             if (user == null) return Unauthorized();
+            
+            string? text = HttpContext.Request.Form["text"];
 
-            //// Traiter les images reçues
-            //try
-            //{
-            //    IFormCollection formCollection = await Request.ReadFormAsync();
-            //    IFormFile? file = formCollection.Files.GetFile("monImage"); // ⛔ Même clé que dans le FormData 😠
-
-            //    if (file == null) return BadRequest(new { Message = "Fournis une image, niochon" });
-
-            //    Image image = Image.Load(file.OpenReadStream());
-
-            //    Picture si = new Picture
-            //    {
-            //        Id = 0,
-            //        FileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName),
-            //        MimeType = file.ContentType
-            //    };
-
-            //    // ⛔ Ce dossier (projet/images/big) DOIT déjà exister 📂 !! Créez-le d'abord !
-            //    image.Save(Directory.GetCurrentDirectory() + "/images/full/" + si.FileName);
-
-            //    // 🤏 Optionnel mais souhaitable : réduire la taille de l'image pour sauvegarder une
-            //    // copie miniature. Remarquez qu'on a utilisé un sous-dossier différent ! 📂
-            //    image.Mutate(i => i.Resize(
-            //        new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }));
-            //    image.Save(Directory.GetCurrentDirectory() + "/images/thumbnail/" + si.FileName);
-
-            //    //_commentService.CreateComment(si);
-            //    //await _context.SaveChangesAsync();
-
-            //    // La seule chose dont le client pourrait avoir besoin, c'est l'id de l'image.
-            //    // On aurait pu ne rien retourner aussi, selon les besoins du client Angular.
-            //    return Ok(si.Id);
-            //}
-            //catch (Exception)
-            //{
-            //    throw;
-            //}
+            if (text == null)
+                return BadRequest(new { Message = "Il manque des un comments !" });
 
 
             Comment? parentComment = await _commentService.GetComment(parentCommentId);
             if (parentComment == null || parentComment.User == null) return BadRequest();
 
-            Comment? newComment = await _commentService.CreateComment(user, commentDTO.Text, parentComment);
+            Comment? newComment = await _commentService.CreateComment(user,text,parentComment);
             if (newComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
             bool voteToggleSuccess = await _commentService.UpvoteComment(newComment.Id, user);
