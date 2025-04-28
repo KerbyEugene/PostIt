@@ -41,11 +41,13 @@ namespace PostHubServer.Controllers
             if (text == null)
                 return BadRequest(new { Message = "Il manque des un comments !" });
 
+            IFormCollection formCollection = await Request.ReadFormAsync();
+            List<IFormFile> uploadedPictures = formCollection.Files.ToList();
 
             Comment? parentComment = await _commentService.GetComment(parentCommentId);
             if (parentComment == null || parentComment.User == null) return BadRequest();
 
-            Comment? newComment = await _commentService.CreateComment(user,text,parentComment);
+            Comment? newComment = await _commentService.CreateComment(user, text, parentComment, uploadedPictures);
             if (newComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
             bool voteToggleSuccess = await _commentService.UpvoteComment(newComment.Id, user);

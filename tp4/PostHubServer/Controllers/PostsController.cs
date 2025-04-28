@@ -28,27 +28,27 @@ namespace PostHubServer.Controllers
 
         // Créer un nouveau Post. Cela crée en fait un nouveau commentaire (le commentaire principal du post)
         // et le post lui-même.
-        [HttpPost("{hubId}")]
-        [Authorize]
-        public async Task<ActionResult<PostDisplayDTO>> PostPost(int hubId, PostDTO postDTO)
-        {
-            User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            if (user == null) return Unauthorized();
+        //[HttpPost("{hubId}")]
+        //[Authorize]
+        //public async Task<ActionResult<PostDisplayDTO>> PostPost(int hubId, PostDTO postDTO)
+        //{
+        //    User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        //    if (user == null) return Unauthorized();
 
-            Hub? hub = await _hubService.GetHub(hubId);
-            if (hub == null) return NotFound();
+        //    Hub? hub = await _hubService.GetHub(hubId);
+        //    if (hub == null) return NotFound();
 
-            Comment? mainComment = await _commentService.CreateComment(user, postDTO.Text, null);
-            if (mainComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
+        //    Comment? mainComment = await _commentService.CreateComment(user, postDTO.Text, null);
+        //    if (mainComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
-            Post? post = await _postService.CreatePost(postDTO.Title, hub, mainComment);
-            if (post == null) return StatusCode(StatusCodes.Status500InternalServerError);
+        //    Post? post = await _postService.CreatePost(postDTO.Title, hub, mainComment);
+        //    if (post == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
-            bool voteToggleSuccess = await _commentService.UpvoteComment(mainComment.Id, user);
-            if (!voteToggleSuccess) return StatusCode(StatusCodes.Status500InternalServerError);
+        //    bool voteToggleSuccess = await _commentService.UpvoteComment(mainComment.Id, user);
+        //    if (!voteToggleSuccess) return StatusCode(StatusCodes.Status500InternalServerError);
 
-            return Ok(new PostDisplayDTO(post, true, user));
-        }
+        //    return Ok(new PostDisplayDTO(post, true, user));
+        //}
 
         /// <summary>
         /// Obtenir une list de posts selon certains critères
