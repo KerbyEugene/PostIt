@@ -65,7 +65,7 @@ namespace PostHubServer.Controllers
                 Comment? mainComment = await _commentService.CreateComment(user, postDTO.Text, null);
                 if (mainComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
-                Post? post = await _postService.CreatePost(postDTO.Title, hub, mainComment, pi);
+                Post? post = await _postService.CreatePost(postDTO.Title, hub, mainComment, new List<Picture> { pi });
                 if (post == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
                 bool voteToggleSuccess = await _commentService.UpvoteComment(mainComment.Id, user);
@@ -73,8 +73,6 @@ namespace PostHubServer.Controllers
 
                 return Ok(new PostDisplayDTO(post, true, user));
             }
-
-
             catch (Exception)
             {
                 throw;
