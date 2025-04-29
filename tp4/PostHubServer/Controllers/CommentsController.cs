@@ -9,6 +9,7 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
+using System.Text.RegularExpressions;
 
 namespace PostHubServer.Controllers
 {
@@ -159,5 +160,19 @@ namespace PostHubServer.Controllers
 
             return Ok(new { Message = "Commentaire supprimé." });
         }
+       
+        //[HttpGet("{size}/{id}")]
+        //public async Task<ActionResult<Picture>> GetPicture(string size, int id)
+        //{
+        //    //Picture? si = await _commentService.GetComment;
+        //    if (si == null) return NotFound();
+
+        //    // Si la size fournit ne correspond pas à "big" OU "smol", erreur.
+        //    if (!Regex.Match(size, "big|smol").Success) return BadRequest(new { Message = "La taille demandée n'existe pas." });
+
+        //    // Récupération du fichier sur le disque
+        //    byte[] bytes = System.IO.File.ReadAllBytes(Directory.GetCurrentDirectory() + "/images/" + size + "/" + si.FileName);
+        //    return File(bytes, si.MimeType);
+        //}
     }
 }
