@@ -32,40 +32,61 @@ namespace PostHubServer.Controllers
         // et le post lui-même.
         [HttpPost("{hubId}")]
         [Authorize]
-        public async Task<ActionResult<Picture>> PostPost(int hubId, PostDTO postDTO)
+        public async Task<ActionResult<Picture>> PostPost(int hubId)
         {
             try
             {
                 IFormCollection formCollection = await Request.ReadFormAsync();
-                IFormFile? file = formCollection.Files.GetFile("monImage");
+                //IFormFile? file = formCollection.Files.GetFile("image");
+               
 
-                if (file == null) return BadRequest(new { Message = "Fournis une image" });
+                string? titleString = Request.Form["title"];
+                string? textString = Request.Form["text"];
 
-                Image image = Image.Load(file.OpenReadStream());
+                //if (file == null || titleString == null || textString == null) return BadRequest(new { Message = "Il manque des morceaux" });
 
-                Picture pi = new Picture
+                List<Picture> pictures = new();
+
+                int i = 1;
+                foreach(var file in formCollection.Files)
                 {
-                    Id = 0,
-                    FileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName),
-                    MimeType = file.ContentType
-                };
+                    if (file == null || titleString == null || textString == null) return BadRequest(new { Message = "Il manque des morceaux" });
 
-                image.Save(Directory.GetCurrentDirectory() + "/images/big/" + pi.FileName);
+                    if (file.Length > 0)
+                    {
 
-                image.Mutate(i => i.Resize(
-                    new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }));
-                image.Save(Directory.GetCurrentDirectory() + "/images/smol" + pi.FileName);
+                        var extension = Path.GetExtension(file.FileName);
+                        var uniqueName = Guid.NewGuid().ToString() + extension;
+                        var filenameWithIndex = $"img{i}_{uniqueName}";
 
+                        Image image = Image.Load(file.OpenReadStream());
+                        
+                        image.Save(Directory.GetCurrentDirectory() + "/images/full/" + filenameWithIndex);
+
+                        image.Mutate(i => i.Resize(
+                            new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }));
+                        image.Save(Directory.GetCurrentDirectory() + "/images/thumbnail" + filenameWithIndex);                        
+
+                        pictures.Add(new Picture
+                        {
+                            Id=0,
+                            FileName = filenameWithIndex,
+                            MimeType = file.ContentType
+                        });
+                        i++;
+                    }                    
+                }                
+                
                 User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
                 if (user == null) return Unauthorized();
 
                 Hub? hub = await _hubService.GetHub(hubId);
                 if (hub == null) return NotFound();
 
-                Comment? mainComment = await _commentService.CreateComment(user, postDTO.Text, null);
+                Comment? mainComment = await _commentService.CreateComment(user, textString, null);
                 if (mainComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
-                Post? post = await _postService.CreatePost(postDTO.Title, hub, mainComment, new List<Picture> { pi });
+                Post? post = await _postService.CreatePost(titleString, hub, mainComment, pictures);
                 if (post == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
                 bool voteToggleSuccess = await _commentService.UpvoteComment(mainComment.Id, user);

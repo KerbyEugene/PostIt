@@ -12,7 +12,7 @@ namespace PostHubServer.Services
             _context = context;
         }
 
-        public async Task<Post> CreatePost(string title, Hub hub, Comment mainComment, ICollection<Picture> pictures)
+        public async Task<Post> CreatePost(string title, Hub hub, Comment mainComment, IList<Picture> pictures)
         {
             Post newPost = new Post()
             {
@@ -20,9 +20,10 @@ namespace PostHubServer.Services
                 MainComment = mainComment,
                 MainCommentId = mainComment.Id,
                 Hub = hub,
-                Picture = pictures.ToList()
+                Picture = pictures
 
             };
+            
             _context.Posts.Add(newPost);
             await _context.SaveChangesAsync();
             return newPost;
