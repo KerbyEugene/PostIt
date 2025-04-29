@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { faDownLong, faEllipsis, faImage, faMessage, faUpLong, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { Post } from '../models/post';
 import { PostService } from '../services/post.service';
@@ -36,7 +36,7 @@ export class PostComponent {
   faMessage = faMessage;
   faImage = faImage;
   faXmark = faXmark;
-
+  @ViewChild("myFileInput", {static : false}) pictureInput ?: ElementRef;
   constructor(public postService : PostService, public route : ActivatedRoute, public router : Router, public commentService : CommentService) { }
 
   async ngOnInit() {
@@ -63,11 +63,20 @@ export class PostComponent {
       return;
     }
 
-    let commentDTO = {
-      text : this.newComment
-    }
+    let formData= new FormData();
+   let i=1;
+   formData.append("text",this.newComment);
+   if(this.pictureInput == undefined){
+    console.log("oups");
+    return;
+   } 
+   for (let file of this.pictureInput.nativeElement.files)
+    {
+    formData.append("monImage"+i, file, file.name); 
+    i++;
+   }
 
-    this.post?.mainComment?.subComments?.push(await this.commentService.postComment(commentDTO, this.post.mainComment.id));
+    this.post?.mainComment?.subComments?.push(await this.commentService.postComment(formData, this.post.mainComment.id));
 
     this.newComment = "";
   }

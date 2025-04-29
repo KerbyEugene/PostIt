@@ -44,6 +44,12 @@ namespace PostHubServer.Controllers
             IFormCollection formCollection = await Request.ReadFormAsync();
             List<IFormFile> uploadedPictures = formCollection.Files.ToList();
 
+
+            if(uploadedPictures.Count()==0)
+            {
+                 return BadRequest(new { Message = "Aucune image téléchargée !" });
+            }
+
             Comment? parentComment = await _commentService.GetComment(parentCommentId);
             if (parentComment == null || parentComment.User == null) return BadRequest();
 
