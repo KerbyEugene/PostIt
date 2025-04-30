@@ -1,4 +1,5 @@
 ﻿using PostHubServer.Data;
+using PostHubServer.Models;
 
 namespace PostHubServer.Services
 {
@@ -10,7 +11,12 @@ namespace PostHubServer.Services
         {
             _context = context;
         }
+        public async Task<Picture?> GetPicture(int id)
+        {
+            if (IsContextNull()) return null;
 
+            return await _context.Pictures.FindAsync(id);
+        }
         private bool IsContextNull() => _context == null || _context.Pictures == null;
     }
 }
