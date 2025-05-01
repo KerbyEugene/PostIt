@@ -6,6 +6,8 @@ using PostHubServer.Models.DTOs;
 using PostHubServer.Models;
 using PostHubServer.Services;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
 
 namespace PostHubServer.Controllers
 {
@@ -16,12 +18,13 @@ namespace PostHubServer.Controllers
         private readonly UserManager<User> _userManager;
         private readonly PostService _postService;
         private readonly CommentService _commentService;
-
-        public CommentsController(UserManager<User> userManager, PostService postService, CommentService commentService)
+        private readonly PictureService _pictureService;
+        public CommentsController(UserManager<User> userManager, PostService postService, CommentService commentService, PictureService pictureService)
         {
             _userManager = userManager;
             _postService = postService;
             _commentService = commentService;
+            _pictureService = pictureService;
         }
 
         // Créer un nouveau commentaire. (Ne permet pas de créer le commentaire principal d'un post, pour cela,
@@ -142,5 +145,20 @@ namespace PostHubServer.Controllers
 
             return Ok(new { Message = "Commentaire supprimé." });
         }
+
+        [HttpGet("{size}/{id}")]
+        public async Task<ActionResult<Picture>> GetPicture(string size, int id)
+        {
+            Picture? si = await _pictureService.GetPicture(id);
+            if (si == null) return NotFound();
+
+            // Si la size fournit ne correspond pas à "big" OU "smol", erreur.
+            if (!Regex.Match(size, "full|thumbnail").Success) return BadRequest(new { Message = "La taille demandée n'existe pas." });
+
+            // Récupération du fichier sur le disque
+            byte[] bytes = System.IO.File.ReadAllBytes(Directory.GetCurrentDirectory() + "/images/" + size + "/" + si.FileName);
+            return File(bytes, si.MimeType);
+        }
+
     }
 }

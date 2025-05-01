@@ -24,7 +24,7 @@
             MainComment = new CommentDisplayDTO(post.MainComment!, withSubComments, user);
             HubName = post.Hub!.Name;
             HubId = post.Hub!.Id;
-            PictureIds = post.Picture.Select(pic => pic.Id).ToList();
+            PictureIds = post.Pictures.Select(pic => pic.Id).ToList();
         }
     }
 }

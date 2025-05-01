@@ -7,7 +7,7 @@ namespace PostHubServer.Models
         public int Id { get; set; }
         public string Title { get; set; } = null!;
         public virtual Hub? Hub { get; set; }
-        public virtual IList<Picture>? Picture { get; set; } = new List<Picture>();
+        public virtual List<Picture>? Pictures { get; set; } = new List<Picture>();
 
         [InverseProperty("MainCommentOf")]
         public virtual Comment? MainComment { get; set; } // Commentaire principal de l'auteur qui a créé le post

@@ -22,6 +22,7 @@ export class PostComponent {
   sorting : string = "popular";
   newComment : string = "";
   newMainCommentText : string = "";
+  pictureIds : number [] = [];
 
   // Booléens sus pour cacher / afficher des boutons
   isAuthor : boolean = false;
