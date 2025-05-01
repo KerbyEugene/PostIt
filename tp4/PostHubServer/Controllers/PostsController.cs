@@ -6,6 +6,8 @@ using PostHubServer.Models;
 using PostHubServer.Models.DTOs;
 using PostHubServer.Services;
 using System.Security.Claims;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace PostHubServer.Controllers
 {
@@ -30,25 +32,74 @@ namespace PostHubServer.Controllers
         // et le post lui-même.
         [HttpPost("{hubId}")]
         [Authorize]
-        public async Task<ActionResult<PostDisplayDTO>> PostPost(int hubId, PostDTO postDTO)
+        public async Task<ActionResult<Picture>> PostPost(int hubId)
         {
-            User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            if (user == null) return Unauthorized();
+            try
+            {
+                IFormCollection formCollection = await Request.ReadFormAsync();
+                //IFormFile? file = formCollection.Files.GetFile("image");
+               
 
-            Hub? hub = await _hubService.GetHub(hubId);
-            if (hub == null) return NotFound();
+                string? titleString = Request.Form["title"];
+                string? textString = Request.Form["text"];
 
-            Comment? mainComment = await _commentService.CreateComment(user, postDTO.Text, null, null);
-            if (mainComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
+                //if (file == null || titleString == null || textString == null) return BadRequest(new { Message = "Il manque des morceaux" });
 
-            Post? post = await _postService.CreatePost(postDTO.Title, hub, mainComment);
-            if (post == null) return StatusCode(StatusCodes.Status500InternalServerError);
+                List<Picture> pictures = new();
 
-            bool voteToggleSuccess = await _commentService.UpvoteComment(mainComment.Id, user);
-            if (!voteToggleSuccess) return StatusCode(StatusCodes.Status500InternalServerError);
+                int i = 1;
+                foreach(var file in formCollection.Files)
+                {
+                    if (file == null || titleString == null || textString == null) return BadRequest(new { Message = "Il manque des morceaux" });
 
-            return Ok(new PostDisplayDTO(post, true, user));
+                    if (file.Length > 0)
+                    {
+
+                        var extension = Path.GetExtension(file.FileName);
+                        var uniqueName = Guid.NewGuid().ToString() + extension;
+                        var filenameWithIndex = $"img{i}_{uniqueName}";
+
+                        Image image = Image.Load(file.OpenReadStream());
+                        
+                        image.Save(Directory.GetCurrentDirectory() + "/images/full/" + filenameWithIndex);
+
+                        image.Mutate(i => i.Resize(
+                            new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }));
+                        image.Save(Directory.GetCurrentDirectory() + "/images/thumbnail" + filenameWithIndex);                        
+
+                        pictures.Add(new Picture
+                        {
+                            Id=0,
+                            FileName = filenameWithIndex,
+                            MimeType = file.ContentType
+                        });
+                        i++;
+                    }                    
+                }                
+                
+                User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                if (user == null) return Unauthorized();
+
+                Hub? hub = await _hubService.GetHub(hubId);
+                if (hub == null) return NotFound();
+
+                Comment? mainComment = await _commentService.CreateComment(user, textString, null);
+                if (mainComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
+
+                Post? post = await _postService.CreatePost(titleString, hub, mainComment, pictures);
+                if (post == null) return StatusCode(StatusCodes.Status500InternalServerError);
+
+                bool voteToggleSuccess = await _commentService.UpvoteComment(mainComment.Id, user);
+                if (!voteToggleSuccess) return StatusCode(StatusCodes.Status500InternalServerError);
+
+                return Ok(new PostDisplayDTO(post, true, user));
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
+           
 
         /// <summary>
         /// Obtenir une list de posts selon certains critères
