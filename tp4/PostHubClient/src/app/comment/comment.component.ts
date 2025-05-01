@@ -66,11 +66,13 @@ export class CommentComponent {
    let formData= new FormData();
    let i=1;
    formData.append("text",this.newComment);
-   for (let file of this.pictureInput?.nativeElement.files)
-    {
-    formData.append("monImage"+i, file, file.name); 
-    i++;
-   }
+   if(this.pictureInput != undefined){
+    for (let file of this.pictureInput.nativeElement.files)
+      {
+      formData.append("monImage"+i, file, file.name); 
+      i++;
+    }
+  }
 
     this.comment.subComments.push(await this.commentService.postComment(formData, this.comment.id));
     

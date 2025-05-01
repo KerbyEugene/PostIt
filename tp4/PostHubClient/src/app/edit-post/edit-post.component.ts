@@ -43,13 +43,8 @@ export class EditPostComponent {
       console.log("Input HTML non chargé");
       return;
     }
-    let file = this.pictureInput.nativeElement.files[0];
-
-    if(file == null){
-      console.log("Input HTML ne contient aucune image.");
-      return;
-    }
-    
+   
+   
     let i = 1;
     let formData = new FormData();
     formData.append("title", this.postTitle);
