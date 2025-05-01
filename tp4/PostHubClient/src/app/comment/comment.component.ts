@@ -6,6 +6,7 @@ import { Comment } from '../models/comment';
 import { CommonModule, formatDate } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { lastValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-comment',
@@ -38,13 +39,17 @@ export class CommentComponent {
   newComment : string = "";
   editedText ?: string;
   @ViewChild("myFileInput", {static : false}) pictureInput ?: ElementRef;
+  http: any;
+ pictureIds : number[] = [];
 
   constructor(public commentService : CommentService) { }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.isAuthor = localStorage.getItem("username") == this.comment?.username;
     this.editedText = this.comment?.text;
   }
+  
+
 
   // Créer un nouveau sous-commentaire au commentaire affiché dans ce composant
   // (Pouvoir les commentaires du post, donc ceux qui sont enfant du commentaire principal du post,

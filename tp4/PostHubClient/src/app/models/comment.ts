@@ -1,4 +1,5 @@
 export class Comment{
+
     constructor(
         public id : number,
         public text : string,
@@ -9,6 +10,7 @@ export class Comment{
         public upvoted : boolean,
         public downvoted : boolean,
         public subCommentTotal : number,
-        public subComments : Comment[] | null
+        public subComments : Comment[] | null,
+        public imageIds : number[]
     ){}
 }

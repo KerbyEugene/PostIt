@@ -18,7 +18,11 @@
           [(ngModel)]="editedText">{{comment.text}}</textarea>
       </div>
       <div class="commentPictures">
-        <!-- Des images pourraient être affichées ici... -->
+        <!-- Afficher les images associées au commentaire -->
+        <div *ngFor="let imageId of comment.imageIds">
+          <img [src]="'https://localhost:7216/api/Comments/GetPicture/full/' + imageId" alt="Image du commentaire" />
+        </div>
+        
       </div>
     </div>
   

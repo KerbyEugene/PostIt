@@ -75,6 +75,7 @@ namespace PostHubServer.Services
                     }
 
                 }
+                await _context.SaveChangesAsync();
             }
 
             _context.Comments.Add(newComment);
