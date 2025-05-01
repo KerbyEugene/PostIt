@@ -42,7 +42,7 @@ export class PostComponent {
 
   async ngOnInit() {
     let postId : string | null = this.route.snapshot.paramMap.get("postId");
-
+    
     if(postId != null){
       this.post = await this.postService.getPost(+postId, this.sorting);
       this.newMainCommentText = this.post.mainComment == null ? "" : this.post.mainComment.text;
@@ -64,18 +64,19 @@ export class PostComponent {
       return;
     }
 
-    let formData= new FormData();
+   let formData= new FormData();
    let i=1;
    formData.append("text",this.newComment);
-   if(this.pictureInput == undefined){
-    console.log("oups");
-    return;
-   } 
-   for (let file of this.pictureInput.nativeElement.files)
-    {
-    formData.append("monImage"+i, file, file.name); 
-    i++;
-   }
+
+   if(this.pictureInput != undefined){
+      for (let file of this.pictureInput.nativeElement.files)
+        {
+        formData.append("monImage"+i, file, file.name); 
+        i++;
+      }
+    }
+   
+  
 
     this.post?.mainComment?.subComments?.push(await this.commentService.postComment(formData, this.post.mainComment.id));
 

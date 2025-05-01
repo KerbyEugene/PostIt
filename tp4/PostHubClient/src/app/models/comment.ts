@@ -11,6 +11,6 @@ export class Comment{
         public downvoted : boolean,
         public subCommentTotal : number,
         public subComments : Comment[] | null,
-        public imageIds : number[]
+        public imageIds : number[] 
     ){}
 }

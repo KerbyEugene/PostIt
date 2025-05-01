@@ -43,12 +43,7 @@ export class EditPostComponent {
       console.log("Input HTML non chargé");
       return;
     }
-    let file = this.pictureInput.nativeElement.files[0];
-
-    if(file == null){
-      console.log("Input HTML ne contient aucune image.");
-      return;
-    }
+   
     
     let i = 1;
     let formData = new FormData();
@@ -59,12 +54,7 @@ export class EditPostComponent {
       i++;
     }  
 
-
-    //let postDTO = {
-    //   title : this.postTitle,
-    //   text : this.postText
-    //};
-
+ 
     let newPost : Post = await this.postService.postPost(this.hub.id, formData);
 
     // On se déplace vers le nouveau post une fois qu'il est créé
