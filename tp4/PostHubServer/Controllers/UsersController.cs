@@ -10,6 +10,7 @@ using SixLabors.ImageSharp.Processing;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace PostHubServer.Controllers
 {
@@ -85,42 +86,47 @@ namespace PostHubServer.Controllers
         [HttpPut]
         public async Task<ActionResult<Picture>> ChangeAvatar()
         {
-            try
-            {
-                IFormCollection formCollection = await Request.ReadFormAsync();
-                IFormFile? file = formCollection.Files.GetFile("monImage"); // ⛔ Même clé que dans le FormData 😠
 
-                if (file == null) return BadRequest(new { Message = "Fournis une image, niochon" });
+            var user = await _userManager.GetUserAsync(User);
 
-                Image image = Image.Load(file.OpenReadStream());
+            IFormCollection formCollection = await Request.ReadFormAsync();
+            IFormFile? file = formCollection.Files.GetFile("monImage"); // ⛔ Même clé que dans le FormData 😠
 
-                Picture si = new Picture
-                {
-                    Id = 0,
-                    FileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName),
-                    MimeType = file.ContentType
-                };
+            if (file == null) return BadRequest(new { Message = "Fournis une image, niochon" });
 
-                // ⛔ Ce dossier (projet/images/big) DOIT déjà exister 📂 !! Créez-le d'abord !
-                image.Save(Directory.GetCurrentDirectory() + "/images/full/" + si.FileName);
+            Image image = Image.Load(file.OpenReadStream());
 
-                // 🤏 Optionnel mais souhaitable : réduire la taille de l'image pour sauvegarder une
-                // copie miniature. Remarquez qu'on a utilisé un sous-dossier différent ! 📂
-                image.Mutate(i => i.Resize(
-                    new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }));
-                image.Save(Directory.GetCurrentDirectory() + "/images/thumbnail/" + si.FileName);
 
-                var user = await _userManager.GetUserAsync(User);
-                await _userManager.AddClaimAsync(user, new Claim("Avatar", si.FileName));
+            user.FileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+            user.MimeType = file.ContentType;
+               
 
-                // La seule chose dont le client pourrait avoir besoin, c'est l'id de l'image.
-                // On aurait pu ne rien retourner aussi, selon les besoins du client Angular.
-                return Ok(si.Id);
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+
+            // ⛔ Ce dossier (projet/images/big) DOIT déjà exister 📂 !! Créez-le d'abord !
+            image.Save(Directory.GetCurrentDirectory() + "/images/avatar/" + user.FileName);
+
+            // 🤏 Optionnel mais souhaitable : réduire la taille de l'image pour sauvegarder une
+               
+            await _userManager.UpdateAsync(user);
+                 
+
+            // La seule chose dont le client pourrait avoir besoin, c'est l'id de l'image.
+            // On aurait pu ne rien retourner aussi, selon les besoins du client Angular.
+            return Ok();
+     
         }
+        //[HttpGet("{size}/{id}")]
+        //public async Task<ActionResult<Picture>> GetPicture(string size, int id)
+        //{
+        //    Picture? si = await _userManager.FindByIdAsync(id);
+        //    if (si == null) return NotFound();
+
+        //    // Si la size fournit ne correspond pas à "big" OU "smol", erreur.
+        //    if (!Regex.Match(size, "full|thumbnail").Success) return BadRequest(new { Message = "La taille demandée n'existe pas." });
+
+        //    // Récupération du fichier sur le disque
+        //    byte[] bytes = System.IO.File.ReadAllBytes(Directory.GetCurrentDirectory() + "/images/" + size + "/" + si.FileName);
+        //    return File(bytes, si.MimeType);
+        //}
     }
 }

@@ -2,6 +2,7 @@ import { Component, ElementRef, ViewChild } from '@angular/core';
 import { UserService } from '../services/user.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { lastValueFrom } from 'rxjs';
 
 @Component({
   selector: 'app-profile',
@@ -20,6 +21,7 @@ export class ProfileComponent {
   newPasswordConfirm : string = "";
 
   username : string | null = null;
+ 
 
   constructor(public userService : UserService) { }
 
@@ -28,6 +30,29 @@ export class ProfileComponent {
     this.username = localStorage.getItem("username");
   }
 
+  async uploadPicture() : Promise<void>{
 
+    // Il faut vérifier si l'<input> est actuellement visible dans la page !
+    if(this.pictureInput == undefined){
+        console.log("Input HTML non chargé.");
+        return;
+    }
+
+    // On récupère le premier (ou le seul) fichier dans l'<input> !
+    let file = this.pictureInput.nativeElement.files[0];
+
+    if(file == null){
+        console.log("Input HTML ne contient aucune image.");
+        return;
+    }
+
+    // Préparation du FormData avec l'image
+    let formData = new FormData();
+    formData.append("monImage", file, file.name);
+
+    // Envoi au serveur
+   await this.userService.avatar(formData);
+
+}
 
 }
