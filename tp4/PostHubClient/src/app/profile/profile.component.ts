@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { UserService } from '../services/user.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 })
 export class ProfileComponent {
   userIsConnected : boolean = false;
+   @ViewChild("myFileInput", {static : false}) pictureInput ?: ElementRef;
 
   // Vous êtes obligés d'utiliser ces trois propriétés
   oldPassword : string = "";
@@ -26,4 +27,7 @@ export class ProfileComponent {
     this.userIsConnected = localStorage.getItem("token") != null;
     this.username = localStorage.getItem("username");
   }
+
+
+
 }

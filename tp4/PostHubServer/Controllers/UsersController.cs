@@ -1,9 +1,12 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PostHubServer.Models;
 using PostHubServer.Models.DTOs;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -76,6 +79,47 @@ namespace PostHubServer.Controllers
             {
                 return StatusCode(StatusCodes.Status400BadRequest,
                     new { Message = "Le nom d'utilisateur ou le mot de passe est invalide." });
+            }
+        }
+
+        [HttpPut]
+        public async Task<ActionResult<Picture>> ChangeAvatar()
+        {
+            try
+            {
+                IFormCollection formCollection = await Request.ReadFormAsync();
+                IFormFile? file = formCollection.Files.GetFile("monImage"); // ⛔ Même clé que dans le FormData 😠
+
+                if (file == null) return BadRequest(new { Message = "Fournis une image, niochon" });
+
+                Image image = Image.Load(file.OpenReadStream());
+
+                Picture si = new Picture
+                {
+                    Id = 0,
+                    FileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName),
+                    MimeType = file.ContentType
+                };
+
+                // ⛔ Ce dossier (projet/images/big) DOIT déjà exister 📂 !! Créez-le d'abord !
+                image.Save(Directory.GetCurrentDirectory() + "/images/full/" + si.FileName);
+
+                // 🤏 Optionnel mais souhaitable : réduire la taille de l'image pour sauvegarder une
+                // copie miniature. Remarquez qu'on a utilisé un sous-dossier différent ! 📂
+                image.Mutate(i => i.Resize(
+                    new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }));
+                image.Save(Directory.GetCurrentDirectory() + "/images/thumbnail/" + si.FileName);
+
+                var user = await _userManager.GetUserAsync(User);
+                await _userManager.AddClaimAsync(user, new Claim("Avatar", si.FileName));
+
+                // La seule chose dont le client pourrait avoir besoin, c'est l'id de l'image.
+                // On aurait pu ne rien retourner aussi, selon les besoins du client Angular.
+                return Ok(si.Id);
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
     }
