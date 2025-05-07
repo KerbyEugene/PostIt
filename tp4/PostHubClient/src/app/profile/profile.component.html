@@ -15,7 +15,8 @@
     </div>
     <div class="profile">
       <div>Modifier votre avatar</div>
-      <input #myFileInput  type="file" accept="images/*" name="Avatar">
+      <input #myFileInput  type="file" accept="images/*" name="Avatar" (change)="preview($event)" >
+      <img *ngIf="previewUrl" [src]="previewUrl" alt="Aperçu de l'image" style="max-width: 200px; margin-top: 10px;" />
       <button (click)="uploadPicture()">Modifier</button>
     </div>
   </div>

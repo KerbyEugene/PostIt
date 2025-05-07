@@ -47,6 +47,7 @@ export class CommentComponent {
   async ngOnInit() {
     this.isAuthor = localStorage.getItem("username") == this.comment?.username;
     this.editedText = this.comment?.text;
+    
   }
   
 

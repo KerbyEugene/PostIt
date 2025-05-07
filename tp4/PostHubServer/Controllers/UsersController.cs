@@ -115,18 +115,18 @@ namespace PostHubServer.Controllers
             return Ok();
      
         }
-        //[HttpGet("{size}/{id}")]
-        //public async Task<ActionResult<Picture>> GetPicture(string size, int id)
-        //{
-        //    Picture? si = await _userManager.FindByIdAsync(id);
-        //    if (si == null) return NotFound();
+        [HttpGet("{size}/{username}")]
+        public async Task<ActionResult<Picture>> GetAvatar(string size, string username)
+        {
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null) return NotFound();
 
-        //    // Si la size fournit ne correspond pas à "big" OU "smol", erreur.
-        //    if (!Regex.Match(size, "full|thumbnail").Success) return BadRequest(new { Message = "La taille demandée n'existe pas." });
+            // Si la size fournit ne correspond pas à "big" OU "smol", erreur.
+            if (!Regex.Match(size, "Avatar|thumbnail").Success) return BadRequest(new { Message = "La taille demandée n'existe pas." });
 
-        //    // Récupération du fichier sur le disque
-        //    byte[] bytes = System.IO.File.ReadAllBytes(Directory.GetCurrentDirectory() + "/images/" + size + "/" + si.FileName);
-        //    return File(bytes, si.MimeType);
-        //}
+            // Récupération du fichier sur le disque
+            byte[] bytes = System.IO.File.ReadAllBytes(Directory.GetCurrentDirectory() + "/images/" + size + "/" + user.FileName);
+            return File(bytes, user.MimeType);
+        }
     }
 }

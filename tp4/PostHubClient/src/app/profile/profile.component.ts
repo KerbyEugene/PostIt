@@ -19,7 +19,7 @@ export class ProfileComponent {
   oldPassword : string = "";
   newPassword : string = "";
   newPasswordConfirm : string = "";
-
+  previewUrl: string | ArrayBuffer | null = null;
   username : string | null = null;
  
 
@@ -28,8 +28,20 @@ export class ProfileComponent {
   ngOnInit() {
     this.userIsConnected = localStorage.getItem("token") != null;
     this.username = localStorage.getItem("username");
+    
   }
-
+  preview(event: Event): void {
+    const fileInput = event.target as HTMLInputElement;
+    const file = fileInput.files?.[0];
+  
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.previewUrl = reader.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  }
   async uploadPicture() : Promise<void>{
 
     // Il faut vérifier si l'<input> est actuellement visible dans la page !
