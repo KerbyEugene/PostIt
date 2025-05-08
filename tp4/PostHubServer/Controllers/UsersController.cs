@@ -105,7 +105,7 @@ namespace PostHubServer.Controllers
             // ⛔ Ce dossier (projet/images/big) DOIT déjà exister 📂 !! Créez-le d'abord !
             image.Save(Directory.GetCurrentDirectory() + "/images/avatar/" + user.FileName);
 
-            // 🤏 Optionnel mais souhaitable : réduire la taille de l'image pour sauvegarder une
+           
                
             await _userManager.UpdateAsync(user);
                  
