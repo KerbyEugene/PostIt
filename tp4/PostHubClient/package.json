@@ -22,7 +22,7 @@
     "@fortawesome/fontawesome-svg-core": "^6.6.0",
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@glidejs/glide": "^3.7.1",
-    "bootstrap": "^5.3.5",
+    "bootstrap": "^5.3.6",
     "jquery": "^3.7.1",
     "ngx-glide": "^16.0.0",
     "rxjs": "~7.8.0",
