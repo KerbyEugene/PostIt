@@ -41,5 +41,10 @@ export class UserService {
     localStorage.setItem("token", x.token);
     localStorage.setItem("username", x.username);
   }
-
+  async avatar(formData:any){
+    console.log("allo");
+  let x =  await lastValueFrom( this.http.put<number>(domain + "api/Users/ChangeAvatar", formData));
+  console.log(x);
+  }
+  
 }

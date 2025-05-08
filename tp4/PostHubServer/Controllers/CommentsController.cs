@@ -50,6 +50,7 @@ namespace PostHubServer.Controllers
             List<IFormFile> uploadedPictures = formCollection.Files.ToList();
 
 
+
             Comment? parentComment = await _commentService.GetComment(parentCommentId);
             if (parentComment == null || parentComment.User == null) return BadRequest();
 

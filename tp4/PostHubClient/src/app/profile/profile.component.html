@@ -13,5 +13,11 @@
       <input type="password" name="newPasswordConfirm" id="newPasswordConfirm" placeholder="Confirmer le nouveau mot de passe" [(ngModel)]="newPasswordConfirm">
       <button>Modifier</button>
     </div>
+    <div class="profile">
+      <div>Modifier votre avatar</div>
+      <input #myFileInput  type="file" accept="images/*" name="Avatar" (change)="preview($event)" >
+      <img *ngIf="previewUrl" [src]="previewUrl" alt="Aperçu de l'image" style="max-width: 200px; margin-top: 10px;" />
+      <button (click)="uploadPicture()">Modifier</button>
+    </div>
   </div>
   

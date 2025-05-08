@@ -44,7 +44,7 @@ export class EditPostComponent {
       return;
     }
    
-    
+   
     let i = 1;
     let formData = new FormData();
     formData.append("title", this.postTitle);
@@ -54,7 +54,12 @@ export class EditPostComponent {
       i++;
     }  
 
- 
+
+    //let postDTO = {
+    //   title : this.postTitle,
+    //   text : this.postText
+    //};
+
     let newPost : Post = await this.postService.postPost(this.hub.id, formData);
 
     // On se déplace vers le nouveau post une fois qu'il est créé
