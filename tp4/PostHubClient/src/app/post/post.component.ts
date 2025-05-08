@@ -1,4 +1,4 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { faDownLong, faEllipsis, faImage, faMessage, faUpLong, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { Post } from '../models/post';
 import { PostService } from '../services/post.service';
@@ -8,6 +8,8 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommentComponent } from '../comment/comment.component';
+import Glide from '@glidejs/glide';
+
 
 @Component({
   selector: 'app-post',
@@ -38,7 +40,10 @@ export class PostComponent {
   faImage = faImage;
   faXmark = faXmark;
   @ViewChild("myFileInput", {static : false}) pictureInput ?: ElementRef;
-  constructor(public postService : PostService, public route : ActivatedRoute, public router : Router, public commentService : CommentService) { }
+  @ViewChildren('glideitems') glideitems : QueryList<any> = new QueryList();  
+
+
+  constructor(public postService : PostService, public route : ActivatedRoute, public router : Router, public commentService : CommentService) { }  
 
   async ngOnInit() {
     let postId : string | null = this.route.snapshot.paramMap.get("postId");
@@ -46,11 +51,32 @@ export class PostComponent {
     if(postId != null){
       this.post = await this.postService.getPost(+postId, this.sorting);
       this.newMainCommentText = this.post.mainComment == null ? "" : this.post.mainComment.text;
-    }
-
-    
-    this.isAuthor = localStorage.getItem("username") == this.post?.mainComment?.username;
+    }   
+   
+    this.isAuthor = localStorage.getItem("username") == this.post?.mainComment?.username;    
   }
+
+  ngAfterViewInit() {
+    this.glideitems.changes.subscribe(e => {
+      this.initGlide();
+    })
+    if(this.glideitems.length > 0)
+    {
+      this.initGlide();
+    }
+      
+  }
+  initGlide(){
+    var glide = new Glide('.glide', {
+      type: 'carousel',
+      focusAt: 'center',
+      perView: Math.ceil(window.innerWidth / 400)
+    });
+
+    glide.mount();
+  }
+  
+  
 
   async toggleSorting(){
     if(this.post == null) return;
