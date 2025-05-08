@@ -41,13 +41,13 @@ export class CommentComponent {
   @ViewChild("myFileInput", {static : false}) pictureInput ?: ElementRef;
   http: any;
  pictureIds : number[] = [];
-
+ avatar= "";
   constructor(public commentService : CommentService) { }
 
   async ngOnInit() {
     this.isAuthor = localStorage.getItem("username") == this.comment?.username;
     this.editedText = this.comment?.text;
-    
+    this.avatar=`https://localhost:7216/api/Users/GetAvatar/Avatar/${this.comment?.username}`
   }
   
 
