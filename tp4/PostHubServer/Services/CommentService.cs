@@ -1,4 +1,5 @@
-﻿using PostHubServer.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using PostHubServer.Data;
 using PostHubServer.Models;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
@@ -19,7 +20,8 @@ namespace PostHubServer.Services
         {
             if (IsContextNull()) return null;
 
-            return await _context.Comments.FindAsync(id);
+            //return await _context.Comments.FindAsync(id);
+            return await _context.Comments.Include(c => c.pictures).FirstOrDefaultAsync(c => c.Id == id);
         }
 
         // Créer un commentaire (possiblement le commentaire principal d'un post, mais pas forcément)
@@ -87,16 +89,22 @@ namespace PostHubServer.Services
         // Modifier le texte d'un commentaire
         public async Task<Comment?> EditComment(Comment comment, string text, List<IFormFile>? uploadedPictures)
         {
+            if (IsContextNull()) return null;
+
+            // Update the text of the comment
             comment.Text = text;
 
+            // Add new pictures
             if (uploadedPictures != null && uploadedPictures.Any())
             {
                 foreach (var file in uploadedPictures)
                 {
                     if (file != null && file.Length > 0)
                     {
+                        // Load the image
                         Image image = Image.Load(file.OpenReadStream());
 
+                        // Create a new Picture object
                         Picture picture = new Picture
                         {
                             Id = 0,
@@ -104,24 +112,24 @@ namespace PostHubServer.Services
                             MimeType = file.ContentType
                         };
 
+                        // Save the full-size image
                         string fullPath = Path.Combine(Directory.GetCurrentDirectory(), "images/full", picture.FileName);
-                        string thumbPath = Path.Combine(Directory.GetCurrentDirectory(), "images/thumbnail", picture.FileName);
-
                         image.Save(fullPath);
 
-                        image.Mutate(i => i.Resize(
-                            new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }
-                        ));
+                        // Save the thumbnail
+                        string thumbPath = Path.Combine(Directory.GetCurrentDirectory(), "images/thumbnail", picture.FileName);
+                        image.Mutate(i => i.Resize(new ResizeOptions { Mode = ResizeMode.Min, Size = new Size { Height = 200 } }));
                         image.Save(thumbPath);
 
+                        // Add the picture to the database and associate it with the comment
                         _context.Pictures.Add(picture);
                         comment.pictures.Add(picture);
                     }
                 }
             }
 
+            // Save changes to the database
             await _context.SaveChangesAsync();
-
             return comment;
         }
 

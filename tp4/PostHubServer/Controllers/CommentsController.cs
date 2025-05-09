@@ -62,30 +62,43 @@ namespace PostHubServer.Controllers
 
             return Ok(new CommentDisplayDTO(newComment, false, user));
         }
-        
+
         // Modifier le texte d'un commentaire
         [HttpPut("{commentId}")]
         [Authorize]
-        public async Task<ActionResult<CommentDisplayDTO>> PutComment(int commentId, CommentDTO commentDTO)
+        public async Task<ActionResult<CommentDisplayDTO>> PutComment(int commentId)
         {
+            try
+            {
+                // Get the authenticated user
+                User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                if (user == null) return Unauthorized();
 
-            User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            if (user == null) return Unauthorized();
+                // Get the updated text and images from the request
+                string? text = HttpContext.Request.Form["text"];
+                IFormCollection formCollection = await Request.ReadFormAsync();
+                List<IFormFile> uploadedPictures = formCollection.Files.ToList();
 
-            string? text = HttpContext.Request.Form["text"];            
+                // Retrieve the comment to be updated
+                Comment? comment = await _commentService.GetComment(commentId);
+                if (comment == null) return NotFound();
 
-            IFormCollection formCollection = await Request.ReadFormAsync();
-            List<IFormFile> uploadedPictures = formCollection.Files.ToList();
+                // Ensure the user is authorized to edit the comment
+                if (comment.User != user) return Unauthorized();
 
-            Comment? comment = await _commentService.GetComment(commentId);
-            if (comment == null) return NotFound();
+                // Call the service to update the comment
+                Comment? editedComment = await _commentService.EditComment(comment, text, uploadedPictures);
+                if (editedComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
-            if (user == null || comment.User != user) return Unauthorized();
-
-            Comment? editedComment = await _commentService.EditComment(comment, commentDTO.Text, uploadedPictures);
-            if (editedComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
-
-            return Ok(new CommentDisplayDTO(editedComment, true, user));
+                // Return the updated comment
+                return Ok(new CommentDisplayDTO(editedComment, true, user));
+            }
+            catch (Exception ex)
+            {
+                // Log the exception and return a 500 error
+                Console.WriteLine($"Error in PutComment: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred while updating the comment." });
+            }
         }
 
         // Upvoter (ou annuler l'upvote) un commentaire

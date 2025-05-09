@@ -149,15 +149,21 @@ export class PostComponent {
     let formData = new FormData();
     formData.append("text", this.newMainCommentText);
 
-    if(this.pictureInput != undefined){
+    if(this.pictureInput?.nativeElement.files) {
       for(let p of this.pictureInput.nativeElement.files){
-        formData.append("monImage" + 1, p, p.name);
+        formData.append("image" + i, p, p.name);       
+        i++;
       }
     }
     
-    let newMainComment = await this.commentService.editComment(formData, this.post?.mainComment.id);
+    let newMainComment = await this.commentService.editComment(formData, this.post.mainComment.id);
     this.post.mainComment = newMainComment;
     this.toggleMainCommentEdit = false;
+
+    // Clear file input after edit
+    if (this.pictureInput) {
+      this.pictureInput.nativeElement.value = '';
+    }
   }
 
   // Supprimer le commentaire principal du post. Notez que ça ne va pas supprimer le post en entier s'il y a le moindre autre commentaire.
