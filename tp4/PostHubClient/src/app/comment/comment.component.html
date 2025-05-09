@@ -19,8 +19,10 @@
       </div>
       <div class="commentPictures">
         <!-- Afficher les images associées au commentaire -->
-        <div>
+        <div class="images">
+          
         <a *ngFor="let imageId of comment.imageIds" [href]="'https://localhost:7216/api/Comments/GetPicture/full/' + imageId">
+          <div class="X">x</div>
           <img [src]="'https://localhost:7216/api/Comments/GetPicture/full/' + imageId" alt="Image du commentaire" />
         </a>
         </div>

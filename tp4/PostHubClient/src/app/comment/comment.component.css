@@ -214,3 +214,12 @@
     border-radius:20px;
     margin-right:10px;
 }
+.images{
+position: relative;
+}
+.X{
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    color: #1b1b26;
+}
