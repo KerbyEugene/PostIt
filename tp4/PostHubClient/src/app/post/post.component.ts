@@ -102,8 +102,6 @@ export class PostComponent {
       }
     }
    
-  
-
     this.post?.mainComment?.subComments?.push(await this.commentService.postComment(formData, this.post.mainComment.id));
 
     this.newComment = "";
@@ -147,11 +145,17 @@ export class PostComponent {
   async editMainComment(){
     if(this.post == null || this.post.mainComment == null) return;
 
-    let commentDTO = {
-      text : this.newMainCommentText
-    }
+    let i = 1;
+    let formData = new FormData();
+    formData.append("text", this.newMainCommentText);
 
-    let newMainComment = await this.commentService.editComment(commentDTO, this.post?.mainComment.id);
+    if(this.pictureInput != undefined){
+      for(let p of this.pictureInput.nativeElement.files){
+        formData.append("monImage" + 1, p, p.name);
+      }
+    }
+    
+    let newMainComment = await this.commentService.editComment(formData, this.post?.mainComment.id);
     this.post.mainComment = newMainComment;
     this.toggleMainCommentEdit = false;
   }

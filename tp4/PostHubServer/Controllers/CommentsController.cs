@@ -68,14 +68,21 @@ namespace PostHubServer.Controllers
         [Authorize]
         public async Task<ActionResult<CommentDisplayDTO>> PutComment(int commentId, CommentDTO commentDTO)
         {
+
             User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            if (user == null) return Unauthorized();
+
+            string? text = HttpContext.Request.Form["text"];            
+
+            IFormCollection formCollection = await Request.ReadFormAsync();
+            List<IFormFile> uploadedPictures = formCollection.Files.ToList();
 
             Comment? comment = await _commentService.GetComment(commentId);
             if (comment == null) return NotFound();
 
             if (user == null || comment.User != user) return Unauthorized();
 
-            Comment? editedComment = await _commentService.EditComment(comment, commentDTO.Text);
+            Comment? editedComment = await _commentService.EditComment(comment, commentDTO.Text, uploadedPictures);
             if (editedComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
             return Ok(new CommentDisplayDTO(editedComment, true, user));

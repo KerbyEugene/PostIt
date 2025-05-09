@@ -85,9 +85,41 @@ namespace PostHubServer.Services
         }
 
         // Modifier le texte d'un commentaire
-        public async Task<Comment?> EditComment(Comment comment, string text)
+        public async Task<Comment?> EditComment(Comment comment, string text, List<IFormFile>? uploadedPictures)
         {
             comment.Text = text;
+
+            if (uploadedPictures != null && uploadedPictures.Any())
+            {
+                foreach (var file in uploadedPictures)
+                {
+                    if (file != null && file.Length > 0)
+                    {
+                        Image image = Image.Load(file.OpenReadStream());
+
+                        Picture picture = new Picture
+                        {
+                            Id = 0,
+                            FileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName),
+                            MimeType = file.ContentType
+                        };
+
+                        string fullPath = Path.Combine(Directory.GetCurrentDirectory(), "images/full", picture.FileName);
+                        string thumbPath = Path.Combine(Directory.GetCurrentDirectory(), "images/thumbnail", picture.FileName);
+
+                        image.Save(fullPath);
+
+                        image.Mutate(i => i.Resize(
+                            new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }
+                        ));
+                        image.Save(thumbPath);
+
+                        _context.Pictures.Add(picture);
+                        comment.pictures.Add(picture);
+                    }
+                }
+            }
+
             await _context.SaveChangesAsync();
 
             return comment;
