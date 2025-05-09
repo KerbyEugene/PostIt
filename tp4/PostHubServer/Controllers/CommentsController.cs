@@ -66,7 +66,7 @@ namespace PostHubServer.Controllers
         // Modifier le texte d'un commentaire
         [HttpPut("{commentId}")]
         [Authorize]
-        public async Task<ActionResult<CommentDisplayDTO>> PutComment(int commentId, CommentDTO commentDTO)
+        public async Task<ActionResult<CommentDisplayDTO>> PutComment(int commentId)
         {
 
             User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -82,7 +82,7 @@ namespace PostHubServer.Controllers
 
             if (user == null || comment.User != user) return Unauthorized();
 
-            Comment? editedComment = await _commentService.EditComment(comment, commentDTO.Text, uploadedPictures);
+            Comment? editedComment = await _commentService.EditComment(comment, text, uploadedPictures);
             if (editedComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
             return Ok(new CommentDisplayDTO(editedComment, true, user));

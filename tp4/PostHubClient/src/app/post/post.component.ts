@@ -152,6 +152,8 @@ export class PostComponent {
     if(this.pictureInput != undefined){
       for(let p of this.pictureInput.nativeElement.files){
         formData.append("monImage" + 1, p, p.name);
+        this.pictureIds.push(this.pictureInput.nativeElement.files[i].id);
+        i++;
       }
     }
     
