@@ -65,8 +65,9 @@
           <div class="picture-container" *ngFor="let i of post.pictureIds">
             <a [href]="'https://localhost:7216/api/Comments/GetPicture/full/' + i">
             <img [src]="'https://localhost:7216/api/Comments/GetPicture/full/' + i" alt="Picture">
-            <span class="close-button" *ngIf="isAuthor" (click)="deleteImage(i)">×</span>
           </a>
+            <span class="close-button" *ngIf="isAuthor" (click)="deleteImage(i)">×</span>
+          
           </div>
         </div>         
       </div>      
