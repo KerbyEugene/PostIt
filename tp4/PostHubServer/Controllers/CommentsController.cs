@@ -76,12 +76,13 @@ namespace PostHubServer.Controllers
 
                 // Get the updated text and images from the request
                 string? text = HttpContext.Request.Form["text"];
+
                 IFormCollection formCollection = await Request.ReadFormAsync();
                 List<IFormFile> uploadedPictures = formCollection.Files.ToList();
 
                 // Retrieve the comment to be updated
                 Comment? comment = await _commentService.GetComment(commentId);
-                if (comment == null) return NotFound();
+                if (comment == null || comment.User == null) return NotFound();
 
                 // Ensure the user is authorized to edit the comment
                 if (comment.User != user) return Unauthorized();
@@ -91,7 +92,7 @@ namespace PostHubServer.Controllers
                 if (editedComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
                 // Return the updated comment
-                return Ok(new CommentDisplayDTO(editedComment, true, user));
+                return Ok(new CommentDisplayDTO(editedComment, false, user));
             }
             catch (Exception ex)
             {

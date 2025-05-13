@@ -92,7 +92,7 @@ namespace PostHubServer.Services
             if (IsContextNull()) return null;
 
             // Update the text of the comment
-            comment.Text = text;
+            //comment.Text = text;
 
             // Add new pictures
             if (uploadedPictures != null && uploadedPictures.Any())
@@ -126,6 +126,7 @@ namespace PostHubServer.Services
                         comment.pictures.Add(picture);
                     }
                 }
+                await _context.SaveChangesAsync();
             }
 
             // Save changes to the database
