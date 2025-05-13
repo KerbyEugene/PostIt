@@ -186,6 +186,23 @@ namespace PostHubServer.Services
             return true; // Basculement du downvote réussi
         }
 
+        public async Task<bool> Report(int id,User user)
+        {
+
+            if (IsContextNull()) return false;
+
+            Comment? comment = await _context.Comments.FindAsync(id);
+            if (comment == null) return false;
+            comment.Reporters ??= new List<User>();
+            if (comment.Reporters.Contains(user)) comment.Reporters.Remove(user);
+            else
+            {
+                comment.Reporters.Add(user);
+            }
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
         private bool IsContextNull() => _context == null || _context.Comments == null;
     }
 }

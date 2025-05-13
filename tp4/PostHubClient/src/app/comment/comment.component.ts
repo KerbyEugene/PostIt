@@ -164,5 +164,10 @@ export class CommentComponent {
       this.comment.upvotes -= 1;
     }
   }
-
+ async report(){
+  if(this.comment == null) return;
+  console.log("signaler");
+  await this.commentService.report(this.comment.id);
+  
+ }
 }
