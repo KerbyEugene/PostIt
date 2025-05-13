@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 using System.Text.RegularExpressions;
+using System.ComponentModel.Design;
 
 namespace PostHubServer.Controllers
 {
@@ -190,6 +191,16 @@ namespace PostHubServer.Controllers
            await _pictureService.RemovePicture(id);
 
             return Ok();
+        }
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> ReportComment(int id)
+        {
+            User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            if (user == null) return BadRequest();
+            bool Report = await _commentService.Report(id, user);
+            if (!Report) return StatusCode(StatusCodes.Status500InternalServerError);
+            return Ok(new { Message = "Report complété." });
         }
     }
 }

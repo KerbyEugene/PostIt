@@ -48,7 +48,7 @@
         <div *ngIf="editMenu">
           <div *ngIf="isAuthor" (click)="this.editToggle = !this.editToggle">Modifier</div>
           <div *ngIf="isAuthor" (click)="deleteComment()">Supprimer</div>
-          <div *ngIf="!isAuthor">Signaler</div>
+          <div *ngIf="!isAuthor" (click)="report()">Signaler</div>
         </div>
       </div>
       <div>
