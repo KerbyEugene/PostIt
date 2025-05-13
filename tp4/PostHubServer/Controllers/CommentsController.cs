@@ -75,20 +75,55 @@ namespace PostHubServer.Controllers
                 if (user == null) return Unauthorized();
 
                 // Get the updated text and images from the request
-                string? text = HttpContext.Request.Form["text"];
-
                 IFormCollection formCollection = await Request.ReadFormAsync();
-                List<IFormFile> uploadedPictures = formCollection.Files.ToList();
+                //IFormFile? file = formCollection.Files.GetFile("image");
+
+                
+                string? textString = Request.Form["text"];
+
+                //if (file == null || titleString == null || textString == null) return BadRequest(new { Message = "Il manque des morceaux" });
+
+                List<Picture> pictures = new();
+
+                int i = 1;
+                foreach (var file in formCollection.Files)
+                {                   
+
+                    if (file.Length > 0)
+                    {
+
+                        var extension = Path.GetExtension(file.FileName);
+                        var uniqueName = Guid.NewGuid().ToString() + extension;
+                        var filenameWithIndex = $"img{i}_{uniqueName}";
+
+                        Image image = Image.Load(file.OpenReadStream());
+
+                        image.Save(Directory.GetCurrentDirectory() + "/images/full/" + filenameWithIndex);
+
+                        image.Mutate(i => i.Resize(
+                            new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }));
+                        image.Save(Directory.GetCurrentDirectory() + "/images/thumbnail" + filenameWithIndex);
+
+                        pictures.Add(new Picture
+                        {
+                            Id = 0,
+                            FileName = filenameWithIndex,
+                            MimeType = file.ContentType
+                        });
+                        i++;
+                    }
+                }
+
 
                 // Retrieve the comment to be updated
                 Comment? comment = await _commentService.GetComment(commentId);
-                if (comment == null || comment.User == null) return NotFound();
+                if (comment == null) return NotFound();
 
                 // Ensure the user is authorized to edit the comment
                 if (comment.User != user) return Unauthorized();
 
                 // Call the service to update the comment
-                Comment? editedComment = await _commentService.EditComment(comment, text, uploadedPictures);
+                Comment? editedComment = await _commentService.EditComment(comment, textString, pictures);
                 if (editedComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
                 // Return the updated comment

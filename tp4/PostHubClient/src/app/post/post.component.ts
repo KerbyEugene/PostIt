@@ -9,6 +9,7 @@ import { CommonModule } from '@angular/common';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
 import { CommentComponent } from '../comment/comment.component';
 import Glide from '@glidejs/glide';
+import { Comment } from '../models/comment';
 
 
 @Component({
@@ -20,7 +21,8 @@ import Glide from '@glidejs/glide';
 })
 export class PostComponent {
   // Variables pour l'affichage ou associées à des inputs
-  post : Post | null = null;
+  comment : Comment | null = null;
+  post : Post | null = null;  
   sorting : string = "popular";
   newComment : string = "";
   newMainCommentText : string = "";
@@ -41,6 +43,7 @@ export class PostComponent {
   faXmark = faXmark;
   @ViewChild("myFileInput", {static : false}) pictureInput ?: ElementRef;
   @ViewChildren('glideitems') glideitems : QueryList<any> = new QueryList();  
+  @ViewChild("myFile", {static : false}) picture ?: ElementRef;
 
 
   constructor(public postService : PostService, public route : ActivatedRoute, public router : Router, public commentService : CommentService) { }  
@@ -52,6 +55,11 @@ export class PostComponent {
       this.post = await this.postService.getPost(+postId, this.sorting);
       this.newMainCommentText = this.post.mainComment == null ? "" : this.post.mainComment.text;
     }   
+    
+    if(this.post?.mainComment)
+    this.pictureIds = this.post.mainComment.imageIds
+    
+            
    
     this.isAuthor = localStorage.getItem("username") == this.post?.mainComment?.username;    
   }
@@ -149,17 +157,19 @@ export class PostComponent {
     let formData = new FormData();
     formData.append("text", this.newMainCommentText);
 
-    if(this.pictureInput?.nativeElement.files) {
-      for(let p of this.pictureInput.nativeElement.files){
+    if(this.picture?.nativeElement.files) {
+      for(let p of this.picture.nativeElement.files){
         formData.append("image" + i, p, p.name);       
-        i++;
+        i++;        
       }
     }
     
     let newMainComment = await this.commentService.editComment(formData, this.post.mainComment.id);
-    this.post.mainComment = newMainComment;
+    this.post.mainComment = newMainComment;    
+    
     this.toggleMainCommentEdit = false;
 
+  
     // Clear file input after edit
     if (this.pictureInput) {
       this.pictureInput.nativeElement.value = '';

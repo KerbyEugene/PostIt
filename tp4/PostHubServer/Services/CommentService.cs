@@ -87,49 +87,16 @@ namespace PostHubServer.Services
         }
 
         // Modifier le texte d'un commentaire
-        public async Task<Comment?> EditComment(Comment comment, string text, List<IFormFile>? uploadedPictures)
+        public async Task<Comment?> EditComment(Comment comment, string text, List<Picture>? uploadedPictures)
         {
             if (IsContextNull()) return null;
+           comment.Text = text;
+            comment.pictures.AddRange(uploadedPictures);
+            
+                 
+            //comment.pictures.AddRange(uploadedPictures);
 
-            // Update the text of the comment
-            //comment.Text = text;
-
-            // Add new pictures
-            if (uploadedPictures != null && uploadedPictures.Any())
-            {
-                foreach (var file in uploadedPictures)
-                {
-                    if (file != null && file.Length > 0)
-                    {
-                        // Load the image
-                        Image image = Image.Load(file.OpenReadStream());
-
-                        // Create a new Picture object
-                        Picture picture = new Picture
-                        {
-                            Id = 0,
-                            FileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName),
-                            MimeType = file.ContentType
-                        };
-
-                        // Save the full-size image
-                        string fullPath = Path.Combine(Directory.GetCurrentDirectory(), "images/full", picture.FileName);
-                        image.Save(fullPath);
-
-                        // Save the thumbnail
-                        string thumbPath = Path.Combine(Directory.GetCurrentDirectory(), "images/thumbnail", picture.FileName);
-                        image.Mutate(i => i.Resize(new ResizeOptions { Mode = ResizeMode.Min, Size = new Size { Height = 200 } }));
-                        image.Save(thumbPath);
-
-                        // Add the picture to the database and associate it with the comment
-                        _context.Pictures.Add(picture);
-                        comment.pictures.Add(picture);
-                    }
-                }
-                await _context.SaveChangesAsync();
-            }
-
-            // Save changes to the database
+            _context.Comments.Update(comment);
             await _context.SaveChangesAsync();
             return comment;
         }
