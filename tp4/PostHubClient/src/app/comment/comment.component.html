@@ -18,13 +18,16 @@
           [(ngModel)]="editedText">{{comment.text}}</textarea>
       </div>
       <div class="commentPictures">
-        <!-- Afficher les images associées au commentaire -->
-        <div>
-        <a *ngFor="let imageId of comment.imageIds" [href]="'https://localhost:7216/api/Comments/GetPicture/full/' + imageId">
-          <img [src]="'https://localhost:7216/api/Comments/GetPicture/full/' + imageId" alt="Image du commentaire" />
-        </a>
+        <div class="images">
+          <div *ngFor="let imageId of comment.imageIds" class="imageWrapper">
+            <a [href]="'https://localhost:7216/api/Comments/GetPicture/full/' + imageId">
+              <img [src]="'https://localhost:7216/api/Comments/GetPicture/full/' + imageId" alt="Image du commentaire" />
+            </a>
+            <span *ngIf="isAuthor" class="X" (click)="deleteImage(imageId)">×</span>
+          </div>
         </div>
       </div>
+      
     </div>
   
     <!-- Nombreux boutons pour modifier le commentaire (votes, signalement, modification, etc.) -->

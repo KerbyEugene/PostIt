@@ -55,6 +55,14 @@ export class CommentComponent {
   // Créer un nouveau sous-commentaire au commentaire affiché dans ce composant
   // (Pouvoir les commentaires du post, donc ceux qui sont enfant du commentaire principal du post,
   // voyez le composant fullPost !)
+
+  async deleteImage(imageId:number){
+    this.commentService.deleteImage(imageId);
+    if (this.comment && this.comment.imageIds) {
+      this.comment.imageIds = this.comment.imageIds.filter(id => id !== imageId);
+    }
+  }
+
   async createComment(){
     if(this.newComment == ""){
       alert("Écris un commentaire niochon !");

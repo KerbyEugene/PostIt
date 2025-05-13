@@ -63,7 +63,12 @@ export class PostComponent {
    
     this.isAuthor = localStorage.getItem("username") == this.post?.mainComment?.username;    
   }
-
+  async deleteImage(imageId:number){
+    this.commentService.deleteImage(imageId);
+    if (this.post?.pictureIds) {
+      this.post.pictureIds = this.post.pictureIds.filter(id => id !== imageId);
+    }
+  }
   ngAfterViewInit() {
     this.glideitems.changes.subscribe(e => {
       this.initGlide();

@@ -17,6 +17,23 @@ namespace PostHubServer.Services
 
             return await _context.Pictures.FindAsync(id);
         }
+        public async Task<Picture?> RemovePicture(int id)
+        {
+            if (IsContextNull()) return null;
+
+            
+            var picture = await _context.Pictures.FindAsync(id);
+            if (picture == null) return null; 
+
+            
+            _context.Pictures.Remove(picture);
+
+            await _context.SaveChangesAsync();
+
+           
+            return picture;
+        }
+
         private bool IsContextNull() => _context == null || _context.Pictures == null;
     }
 }

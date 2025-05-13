@@ -48,5 +48,10 @@ export class CommentService {
     let x = await lastValueFrom(this.http.put<any>(domain + "api/Comments/DownvoteComment/" + commentId, null));
     console.log(x);
   }
+  async deleteImage(imageId:Number)
+  {
+    let x = await lastValueFrom(this.http.delete<any>(domain + "api/Comments/DeletePicture/" + imageId));
+    console.log(x);
+  }
 
 }

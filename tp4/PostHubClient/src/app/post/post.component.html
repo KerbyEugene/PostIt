@@ -33,12 +33,15 @@
       <div class="commentPictures" >
         <!-- Des images pourraient être affichées ici -->         
 
-        <div style="width: 100%" *ngIf="post.mainComment!.imageIds.length > 4">
+        <div style="width: 100%" *ngIf="post.pictureIds.length > 4">
           <div class="glide">
             <div class="glide__track" data-glide-el="track">
               <ul class="glide__slides">
-                <li class="glide__slide" style="height: 200px;" *ngFor="let i of post.mainComment!.imageIds" #glideitems>
+                <li class="glide__slide" style="height: 200px;" *ngFor="let i of post.pictureIds" #glideitems>
+                  <div class="picture-container">
                  <a [href]="'https://localhost:7216/api/Comments/GetPicture/full/' + i"> <img [src]="'https://localhost:7216/api/Comments/GetPicture/full/' + i" alt="Picture" style="object-fit: cover; width: 100%; height: 100%;"> </a>
+                 <span class="close-button" *ngIf="isAuthor" (click)="deleteImage(i)">×</span>
+                </div>
                 </li>
               </ul>
             </div>
@@ -58,8 +61,14 @@
           </div>
         </div>
         
-        <div *ngIf="post.mainComment!.imageIds.length < 4">
-          <img *ngFor="let i of post.mainComment!.imageIds" [src]="'https://localhost:7216/api/Comments/GetPicture/full/' + i" alt="Picture">
+        <div *ngIf="post.pictureIds.length < 4">
+          <div class="picture-container" *ngFor="let i of post.pictureIds">
+            <a [href]="'https://localhost:7216/api/Comments/GetPicture/full/' + i">
+            <img [src]="'https://localhost:7216/api/Comments/GetPicture/full/' + i" alt="Picture">
+          </a>
+            <span class="close-button" *ngIf="isAuthor" (click)="deleteImage(i)">×</span>
+          
+          </div>
         </div>         
       </div>      
         
@@ -76,7 +85,7 @@
         <button><fa-icon [icon]="faMessage"></fa-icon> {{post.mainComment!.subCommentTotal}}</button>
       </div>
       <div>
-        <input #myFile *ngIf="toggleMainCommentEdit" type="file" accept="images/*" name="mainCommentPictures" multiple>
+        <input *ngIf="toggleMainCommentEdit" type="file" accept="images/*" name="mainCommentPictures">
       </div>
       <div>
         <button *ngIf="toggleMainCommentEdit" (click)="toggleMainCommentEdit = false">Annuler</button>
