@@ -11,7 +11,7 @@
         public int HubId { get; set; }
         public string HubName { get; set; } = null!;
         public CommentDisplayDTO MainComment { get; set; } = null!;
-        public List<int> PictureIds { get; set; } = new List<int>();
+        
 
 
 
@@ -23,8 +23,7 @@
             Title = post.Title;
             MainComment = new CommentDisplayDTO(post.MainComment!, withSubComments, user);
             HubName = post.Hub!.Name;
-            HubId = post.Hub!.Id;
-            PictureIds = post.Pictures.Select(pic => pic.Id).ToList();
+            HubId = post.Hub!.Id;            
         }
     }
 }

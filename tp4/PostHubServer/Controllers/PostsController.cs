@@ -37,57 +37,32 @@ namespace PostHubServer.Controllers
         {
             try
             {
-                IFormCollection formCollection = await Request.ReadFormAsync();
-                //IFormFile? file = formCollection.Files.GetFile("image");
-               
+                
 
                 string? titleString = Request.Form["title"];
                 string? textString = Request.Form["text"];
 
                 //if (file == null || titleString == null || textString == null) return BadRequest(new { Message = "Il manque des morceaux" });
+                IFormCollection formCollection = await Request.ReadFormAsync();
+                List<IFormFile> uploadedPictures = formCollection.Files.ToList();
 
-                List<Picture> pictures = new();
 
-                int i = 1;
-                foreach(var file in formCollection.Files)
-                {
-                    if (file == null || titleString == null || textString == null) return BadRequest(new { Message = "Il manque des morceaux" });
 
-                    if (file.Length > 0)
-                    {
 
-                        var extension = Path.GetExtension(file.FileName);
-                        var uniqueName = Guid.NewGuid().ToString() + extension;
-                        var filenameWithIndex = $"img{i}_{uniqueName}";
 
-                        Image image = Image.Load(file.OpenReadStream());
-                        
-                        image.Save(Directory.GetCurrentDirectory() + "/images/full/" + filenameWithIndex);
-
-                        image.Mutate(i => i.Resize(
-                            new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }));
-                        image.Save(Directory.GetCurrentDirectory() + "/images/thumbnail" + filenameWithIndex);                        
-
-                        pictures.Add(new Picture
-                        {
-                            Id=0,
-                            FileName = filenameWithIndex,
-                            MimeType = file.ContentType
-                        });
-                        i++;
-                    }                    
-                }                
-                
                 User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
                 if (user == null) return Unauthorized();
+
+                Comment? parentComment = await _commentService.GetComment(hubId);
+                if (parentComment == null || parentComment.User == null) return BadRequest();
 
                 Hub? hub = await _hubService.GetHub(hubId);
                 if (hub == null) return NotFound();
 
-                Comment? mainComment = await _commentService.CreateComment(user, textString, null, null);
+                Comment? mainComment = await _commentService.CreateComment(user, textString, parentComment, uploadedPictures);
                 if (mainComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
-                Post? post = await _postService.CreatePost(titleString, hub, mainComment, pictures);
+                Post? post = await _postService.CreatePost(titleString, hub, mainComment);
                 if (post == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
                 bool voteToggleSuccess = await _commentService.UpvoteComment(mainComment.Id, user);

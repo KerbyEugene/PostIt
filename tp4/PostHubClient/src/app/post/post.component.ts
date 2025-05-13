@@ -20,8 +20,7 @@ import { Comment } from '../models/comment';
   styleUrl: './post.component.css'
 })
 export class PostComponent {
-  // Variables pour l'affichage ou associées à des inputs
-  comment : Comment | null = null;
+  // Variables pour l'affichage ou associées à des inputs  
   post : Post | null = null;  
   sorting : string = "popular";
   newComment : string = "";
@@ -55,18 +54,16 @@ export class PostComponent {
       this.post = await this.postService.getPost(+postId, this.sorting);
       this.newMainCommentText = this.post.mainComment == null ? "" : this.post.mainComment.text;
     }   
+
     
-    if(this.post?.mainComment)
-    this.pictureIds = this.post.mainComment.imageIds
-    
-            
+  
    
     this.isAuthor = localStorage.getItem("username") == this.post?.mainComment?.username;    
   }
   async deleteImage(imageId:number){
     this.commentService.deleteImage(imageId);
-    if (this.post?.pictureIds) {
-      this.post.pictureIds = this.post.pictureIds.filter(id => id !== imageId);
+    if (this.post?.mainComment?.imageIds) {
+      this.post.mainComment.imageIds = this.post.mainComment.imageIds.filter(id => id !== imageId);
     }
   }
   ngAfterViewInit() {

@@ -12,15 +12,14 @@ namespace PostHubServer.Services
             _context = context;
         }
 
-        public async Task<Post> CreatePost(string title, Hub hub, Comment mainComment, List<Picture> pictures)
+        public async Task<Post> CreatePost(string title, Hub hub, Comment mainComment)
         {
             Post newPost = new Post()
             {
                 Title = title,
                 MainComment = mainComment,
                 MainCommentId = mainComment.Id,
-                Hub = hub,
-                Pictures = pictures
+                Hub = hub
 
             };
             
