@@ -175,11 +175,12 @@ namespace PostHubServer.Controllers
         public async Task<ActionResult> DeleteComment(int commentId)
         {
             User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            bool isAdmin = await _userManager.IsInRoleAsync(user, "moderateur");
 
             Comment? comment = await _commentService.GetComment(commentId);
             if (comment == null) return NotFound();
 
-            if (user == null || comment.User != user) return Unauthorized();
+            if (user == null || comment.User != user&& !isAdmin) return Unauthorized();
 
             // Cette boucle permet non-seulement de supprimer le commentaire lui-même, mais s'il possède
             // un commentaire parent qui a été soft-delete et qui n'a pas de sous-commentaires,
