@@ -125,6 +125,10 @@ export class CommentComponent {
     if(this.comment == null || this.editedText == undefined) return;
     await this.commentService.deleteComment(this.comment.id);
 
+    if(this.comment.imageIds != null){
+      this.comment.imageIds = [];
+    }
+
     // Changements visuels pour le soft-delete
     if(this.comment.subComments != null && this.comment.subComments.length > 0){
       this.comment.username = null;
