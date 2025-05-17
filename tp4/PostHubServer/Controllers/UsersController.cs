@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using PostHubServer.Migrations;
 using PostHubServer.Models;
 using PostHubServer.Models.DTOs;
 using SixLabors.ImageSharp;
@@ -44,6 +45,7 @@ namespace PostHubServer.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new { Message = "La création de l'utilisateur a échoué." });
             }
+
             return Ok(new { Message = "Inscription réussie ! 🥳" });
         }
 
@@ -51,6 +53,11 @@ namespace PostHubServer.Controllers
         public async Task<ActionResult> Login(LoginDTO login)
         {
             User? user = await _userManager.FindByNameAsync(login.Username);
+            if(user == null)
+            {
+                user = await _userManager.FindByEmailAsync(login.Username);
+            }
+            
             if (user != null && await _userManager.CheckPasswordAsync(user, login.Password))
             {
                 IList<string> roles = await _userManager.GetRolesAsync(user);
@@ -87,7 +94,7 @@ namespace PostHubServer.Controllers
         public async Task<ActionResult<Picture>> ChangeAvatar()
         {
 
-            var user = await _userManager.GetUserAsync(User);
+            var user = await _userManager.GetUserAsync(User);            
 
             IFormCollection formCollection = await Request.ReadFormAsync();
             IFormFile? file = formCollection.Files.GetFile("monImage"); // ⛔ Même clé que dans le FormData 😠
@@ -127,6 +134,16 @@ namespace PostHubServer.Controllers
             // Récupération du fichier sur le disque
             byte[] bytes = System.IO.File.ReadAllBytes(Directory.GetCurrentDirectory() + "/images/" + size + "/" + user.FileName);
             return File(bytes, user.MimeType);
+        }
+
+        [HttpPut]
+        public async Task<ActionResult> ChangePassword(ChangePasswordDTO changePW)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            await _userManager.ChangePasswordAsync(user, changePW.OldPassword, changePW.NewPassword);            
+            return Ok();            
         }
     }
 }

@@ -43,8 +43,19 @@ export class UserService {
   }
   async avatar(formData:any){
     console.log("allo");
-  let x =  await lastValueFrom( this.http.put<number>(domain + "api/Users/ChangeAvatar", formData));
-  console.log(x);
+    let x =  await lastValueFrom( this.http.put<number>(domain + "api/Users/ChangeAvatar", formData));
+    console.log(x);
+  }
+  async changePassword(oldPassword : string, newPasswordConfirm : string) : Promise<void>{    
+
+    let changePasswordDTO = {      
+      oldPassword : oldPassword,
+      newPasswordConfirm : newPasswordConfirm
+    };
+
+    let x = await lastValueFrom(this.http.put<any>(domain + "api/Users/ChangePassword", changePasswordDTO));
+    console.log("Mot de passe changé !");
+    console.log(x);
   }
   
 }

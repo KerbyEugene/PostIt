@@ -66,5 +66,18 @@ export class ProfileComponent {
    await this.userService.avatar(formData);
 
 }
+async changePassword() : Promise<void>{  
+  if(this.newPassword != this.newPasswordConfirm){    
+    return;
+  }  
+  await this.userService.changePassword(this.oldPassword, this.newPassword);
+  
+  this.oldPassword = "";
+  this.newPassword = "";
+  this.newPasswordConfirm = "";
+
+}
+
+
 
 }
