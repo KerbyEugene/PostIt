@@ -39,6 +39,7 @@ export class CommentComponent {
   newComment : string = "";
   editedText ?: string;
   @ViewChild("myFileInput", {static : false}) pictureInput ?: ElementRef;
+  @ViewChild("myNewFileInput", {static : false}) newPictureInput ?: ElementRef;
   http: any;
  pictureIds : number[] = [];
  avatar= "";
@@ -95,11 +96,24 @@ export class CommentComponent {
 
     if(this.comment == null || this.editedText == undefined) return;
 
-    let commentDTO = {
-      text : this.editedText
-    }
+    let i = 1;
+    let formData = new FormData();
+    formData.append("text", this.editedText);
 
-    let newMainComment = await this.commentService.editComment(commentDTO, this.comment.id);
+    if(this.newPictureInput?.nativeElement.files) {
+      for(let p of this.newPictureInput.nativeElement.files){
+        formData.append("image" + i, p, p.name);       
+        i++;        
+      }
+    }
+    
+    let newMainComment = await this.commentService.editComment(formData, this.comment.id);
+
+    //let commentDTO = {
+    //   text : this.editedText
+    // }
+
+    //let newMainComment = await this.commentService.editComment(commentDTO, this.comment.id);
     this.comment = newMainComment;
     this.editedText = this.comment.text;
     this.editMenu = false;
@@ -110,6 +124,10 @@ export class CommentComponent {
   async deleteComment(){
     if(this.comment == null || this.editedText == undefined) return;
     await this.commentService.deleteComment(this.comment.id);
+
+    if(this.comment.imageIds != null){
+      this.comment.imageIds = [];
+    }
 
     // Changements visuels pour le soft-delete
     if(this.comment.subComments != null && this.comment.subComments.length > 0){
