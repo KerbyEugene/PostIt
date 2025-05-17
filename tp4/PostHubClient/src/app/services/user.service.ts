@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, Signal, signal, WritableSignal } from '@angular/core';
 import { lastValueFrom } from 'rxjs';
 
 const domain = "https://localhost:7216/";
@@ -8,6 +8,11 @@ const domain = "https://localhost:7216/";
   providedIn: 'root'
 })
 export class UserService {
+    private usernameSignal : WritableSignal<string|null> = signal(null);
+  private rolesSignal : WritableSignal<string[]> = signal([]);
+  
+  username : Signal<string|null> = this.usernameSignal.asReadonly();
+  roles : Signal<string[]> = this.rolesSignal.asReadonly();
 
   constructor(public http : HttpClient) { }
 
@@ -38,8 +43,12 @@ export class UserService {
 
     // N'hésitez pas à ajouter d'autres infos dans le stockage local... 
     // Cela pourrait vous aider pour la partie admin / modérateur
+    this.usernameSignal.set(x.username);
+    this.rolesSignal.set(x.roles);
     localStorage.setItem("token", x.token);
     localStorage.setItem("username", x.username);
+    localStorage.setItem("roles", JSON.stringify(x.roles));
+     
   }
   async avatar(formData:any){
     console.log("allo");

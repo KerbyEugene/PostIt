@@ -170,4 +170,5 @@ export class CommentComponent {
   await this.commentService.report(this.comment.id);
   
  }
+ 
 }

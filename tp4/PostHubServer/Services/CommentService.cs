@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PostHubServer.Data;
 using PostHubServer.Models;
+using PostHubServer.Models.DTOs;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.Processing;
 
@@ -202,6 +203,30 @@ namespace PostHubServer.Services
             await _context.SaveChangesAsync();
             return true;
         }
+        public async Task<List<CommentDisplayDTO>> GetReportedCommentsAsDTOs(User? currentUser = null)
+        {
+            if (IsContextNull()) return new List<CommentDisplayDTO>();
+
+            List<Comment> reportedComments = await _context.Comments
+                .Include(c => c.Reporters)
+                .Include(c => c.User)
+                .Include(c => c.Upvoters)
+                .Include(c => c.Downvoters)
+                .Include(c => c.SubComments)
+                    .ThenInclude(sc => sc.User)
+                .Include(c => c.pictures)
+                .Where(c => c.Reporters.Count > 0)
+                .ToListAsync();
+
+            List<CommentDisplayDTO> dtos = reportedComments
+                .Select(c => new CommentDisplayDTO(c, withSubComments: true, user: currentUser))
+                .ToList();
+
+            return dtos;
+        }
+
+
+
 
         private bool IsContextNull() => _context == null || _context.Comments == null;
     }

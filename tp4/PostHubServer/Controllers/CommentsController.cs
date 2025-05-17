@@ -259,5 +259,17 @@ namespace PostHubServer.Controllers
             if (!Report) return StatusCode(StatusCodes.Status500InternalServerError);
             return Ok(new { Message = "Report complété." });
         }
+
+        [HttpGet("GetReportedComments")]
+        [Authorize(Roles = "moderateur")]
+        public async Task<ActionResult<List<CommentDisplayDTO>>> GetReportedComments()
+        {
+            // Optionnel : récupérer l'utilisateur courant s'il est connecté
+            var user = await _userManager.GetUserAsync(User);
+
+            var reportedDTOs = await _commentService.GetReportedCommentsAsDTOs(user);
+            return Ok(reportedDTOs);
+        }
+
     }
 }
