@@ -58,5 +58,8 @@ export class CommentService {
     let x= await lastValueFrom(this.http.put<any>(domain + "api/Comments/ReportComment/" + commentId, null));
     console.log(x);
   }
+async getReportedComments(): Promise<Comment[]> {
+  return await lastValueFrom(this.http.get<Comment[]>(domain + "api/Comments/GetReportedComments/GetReportedComments"));
+}
 
 }
