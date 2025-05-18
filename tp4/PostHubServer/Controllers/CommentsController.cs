@@ -55,7 +55,7 @@ namespace PostHubServer.Controllers
             Comment? parentComment = await _commentService.GetComment(parentCommentId);
             if (parentComment == null || parentComment.User == null) return BadRequest();
 
-            Comment? newComment = await _commentService.CreateComment(user, text, null, uploadedPictures);
+            Comment? newComment = await _commentService.CreateComment(user, text, parentComment, uploadedPictures);
             if (newComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
             bool voteToggleSuccess = await _commentService.UpvoteComment(newComment.Id, user);
