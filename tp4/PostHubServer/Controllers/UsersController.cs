@@ -154,6 +154,8 @@ namespace PostHubServer.Controllers
         {
             User? newModerateur = await _userManager.FindByNameAsync(userName);
             if (newModerateur == null) return NotFound(new { Message = "Cet utilisateur n'existe pas. 👻" });
+            if (await _userManager.IsInRoleAsync(newModerateur, "moderateur"))
+                return BadRequest(new { message = "L'utilisateur est déjà modérateur" });
 
             await _userManager.AddToRoleAsync(newModerateur, "moderateur");
             return Ok(new { Message = userName = " est maintenant rédacteur / rédactrice ! ✍" });
