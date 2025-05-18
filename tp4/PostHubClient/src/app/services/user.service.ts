@@ -66,5 +66,15 @@ export class UserService {
     console.log("Mot de passe changé !");
     console.log(x);
   }
+
+  async makeModerator(username : string) : Promise<void>{
+    let makeModeratorDTO = {
+      username : username
+    };
+
+    let x = await lastValueFrom(this.http.post<any>(domain + "api/Users/MakeModerator", makeModeratorDTO));
+    console.log("Utilisateur promu modérateur !");
+    console.log(x);
+  }
   
 }

@@ -7,6 +7,7 @@ import { PostComponent } from './post/post.component';
 import { EditPostComponent } from './edit-post/edit-post.component';
 import { NewHubComponent } from './new-hub/new-hub.component';
 import { ModerateCommentsComponent } from './moderate-comments/moderate-comments.component';
+import { AdminTabComponent } from './admin-tab/admin-tab.component';
 
 export const routes: Routes = [
     {path:"", redirectTo:"/postList/index", pathMatch:"full"},
@@ -20,5 +21,6 @@ export const routes: Routes = [
     {path:"post/:postId", component:PostComponent},
     {path:"editPost/:hubId", component:EditPostComponent},
     {path:"newHub", component:NewHubComponent},
-    {path:"reports", component:ModerateCommentsComponent}
+    {path:"reports", component:ModerateCommentsComponent},
+    {path:"admin", component:AdminTabComponent}
 ];

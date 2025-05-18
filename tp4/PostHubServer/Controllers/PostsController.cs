@@ -37,17 +37,14 @@ namespace PostHubServer.Controllers
         {
             try
             {
-                
+                IFormCollection formCollection = await Request.ReadFormAsync();
 
                 string? titleString = Request.Form["title"];
                 string? textString = Request.Form["text"];
 
-                //if (file == null || titleString == null || textString == null) return BadRequest(new { Message = "Il manque des morceaux" });
-                IFormCollection formCollection = await Request.ReadFormAsync();
+                if (titleString == null || textString == null) return BadRequest(new { Message = "Il manque des morceaux" });
+                
                 List<IFormFile> uploadedPictures = formCollection.Files.ToList();
-
-
-
 
 
                 User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);

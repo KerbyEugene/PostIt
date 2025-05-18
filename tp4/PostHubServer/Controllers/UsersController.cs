@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -145,6 +146,17 @@ namespace PostHubServer.Controllers
 
             await _userManager.ChangePasswordAsync(user, changePW.OldPassword, changePW.NewPassword);            
             return Ok();            
+        }
+
+        [HttpPut("{username}")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> MakeModerator(string userName)
+        {
+            User? newModerateur = await _userManager.FindByNameAsync(userName);
+            if (newModerateur == null) return NotFound(new { Message = "Cet utilisateur n'existe pas. 👻" });
+
+            await _userManager.AddToRoleAsync(newModerateur, "redactor");
+            return Ok(new { Message = userName = " est maintenant rédacteur / rédactrice ! ✍" });
         }
     }
 }

@@ -25,6 +25,8 @@
 
       <div [routerLink]="['/postList', 'discover']">Découvrir</div>
 
+      <div *ngIf="userservice.roles().includes('admin')" [routerLink]="['/admin']">Administration</div>
+
        <div *ngIf="userservice.roles().includes('moderateur')" [routerLink]="['/reports']">Modération</div>
 
 
