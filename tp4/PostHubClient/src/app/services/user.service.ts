@@ -74,5 +74,9 @@ export class UserService {
     console.log("Utilisateur promu modérateur !");
     console.log(x);
   }
+  setRoles(roles : string[]){
+    this.rolesSignal.set(roles);
+  }
+
   
 }

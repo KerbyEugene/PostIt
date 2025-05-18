@@ -50,13 +50,13 @@ namespace PostHubServer.Controllers
                 User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
                 if (user == null) return Unauthorized();
 
-                Comment? parentComment = await _commentService.GetComment(hubId);
-                if (parentComment == null || parentComment.User == null) return BadRequest();
+                ////Comment? parentComment = await _commentService.GetComment(hubId);
+                ////if (parentComment == null || parentComment.User == null) return BadRequest();
 
                 Hub? hub = await _hubService.GetHub(hubId);
                 if (hub == null) return NotFound();
 
-                Comment? mainComment = await _commentService.CreateComment(user, textString, parentComment, uploadedPictures);
+                Comment? mainComment = await _commentService.CreateComment(user, textString, null, uploadedPictures);
                 if (mainComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
                 Post? post = await _postService.CreatePost(titleString, hub, mainComment);
