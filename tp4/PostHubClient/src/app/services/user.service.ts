@@ -66,5 +66,9 @@ export class UserService {
     console.log("Mot de passe changé !");
     console.log(x);
   }
+  setRoles(roles : string[]){
+    this.rolesSignal.set(roles);
+  }
+
   
 }

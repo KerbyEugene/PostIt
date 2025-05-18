@@ -32,7 +32,14 @@ export class AppComponent {
   hubList : Hub[] = [];
 
   constructor(public hubService : HubService,public userservice : UserService){}
- 
+  async ngOnInit(): Promise<void> {
+    
+  
+    
+    let rolesJSON : string | null = localStorage.getItem("roles");
+    if(rolesJSON != null) this.userservice.setRoles(JSON.parse(rolesJSON));
+
+  }
  
   async toggleHubs(){
     this.faChevronDown = this.faChevronDown == faChevronDown ? faChevronUp : faChevronDown;
