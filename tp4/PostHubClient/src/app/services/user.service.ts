@@ -68,11 +68,9 @@ export class UserService {
   }
 
   async makeModerator(username : string) : Promise<void>{
-    let makeModeratorDTO = {
-      username : username
-    };
 
-    let x = await lastValueFrom(this.http.post<any>(domain + "api/Users/MakeModerator", makeModeratorDTO));
+
+    let x = await lastValueFrom(this.http.put<any>(domain + "api/Users/MakeModerator/" + username, {}));
     console.log("Utilisateur promu modérateur !");
     console.log(x);
   }
