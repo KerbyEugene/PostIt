@@ -55,5 +55,9 @@ export class UserService {
   let x =  await lastValueFrom( this.http.put<number>(domain + "api/Users/ChangeAvatar", formData));
   console.log(x);
   }
+  setRoles(roles : string[]){
+    this.rolesSignal.set(roles);
+  }
+
   
 }
