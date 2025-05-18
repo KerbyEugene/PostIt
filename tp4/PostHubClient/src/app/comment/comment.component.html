@@ -12,14 +12,22 @@
     <!-- Texte du commentaire et éventuellement images -->
     <div class="postContent">
       <div style="flex:1; display:flex; align-items:center;">
-        <img class="avatar" src="/assets/images/default.png" alt="Avatar">
+        <img class="avatar" [src]="avatar"  alt="Avatar">
         <div *ngIf="!editToggle">{{comment.text}}</div>
         <textarea *ngIf="editToggle" id="commentTextEdit" name="commentTextEdit" rows="3"
           [(ngModel)]="editedText">{{comment.text}}</textarea>
       </div>
       <div class="commentPictures">
-        <!-- Des images pourraient être affichées ici... -->
+        <div class="images">
+          <div *ngFor="let imageId of comment.imageIds" class="imageWrapper">
+            <a [href]="'https://localhost:7216/api/Comments/GetPicture/full/' + imageId">
+              <img [src]="'https://localhost:7216/api/Comments/GetPicture/full/' + imageId" alt="Image du commentaire" />
+            </a>
+            <span *ngIf="isAuthor" class="X" (click)="deleteImage(imageId)">×</span>
+          </div>
+        </div>
       </div>
+      
     </div>
   
     <!-- Nombreux boutons pour modifier le commentaire (votes, signalement, modification, etc.) -->
@@ -40,7 +48,7 @@
         <div *ngIf="editMenu">
           <div *ngIf="isAuthor" (click)="this.editToggle = !this.editToggle">Modifier</div>
           <div *ngIf="isAuthor" (click)="deleteComment()">Supprimer</div>
-          <div *ngIf="!isAuthor">Signaler</div>
+          <div *ngIf="!isAuthor" (click)="report()">Signaler</div>
         </div>
       </div>
       <div>
@@ -48,7 +56,7 @@
       </div>
       <div>
         <!-- Il faudra modifier cet input -->
-        <input *ngIf="editToggle" type="file" accept="images/*" name="editedCommentPictures">
+        <input #myNewFileInput *ngIf="editToggle" type="file" accept="images/*" name="editedCommentPictures" multiple>
       </div>
       <div>
         <button *ngIf="editToggle" (click)="editToggle = false">Annuler</button>
@@ -65,7 +73,7 @@
     <input type="text" name="newComment" id="newComment" placeholder="Ajouter un commentaire" [(ngModel)]="newComment">
     <div *ngIf="displayInputFile" class="commentPictureAdd">
       <!-- Il faudra modifier cet input -->
-      <input type="file" accept="images/*" name="commentPictures">
+      <input #myFileInput  type="file" accept="images/*" name="commentPictures" multiple>
     </div>
     <button (click)="displayInputFile = !displayInputFile"><fa-icon [icon]="faImage"></fa-icon></button>
     <button (click)="createComment()">Ajouter</button>

@@ -1,5 +1,9 @@
-﻿using PostHubServer.Data;
+﻿using Microsoft.EntityFrameworkCore;
+using PostHubServer.Data;
 using PostHubServer.Models;
+using PostHubServer.Models.DTOs;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace PostHubServer.Services
 {
@@ -17,14 +21,16 @@ namespace PostHubServer.Services
         {
             if (IsContextNull()) return null;
 
-            return await _context.Comments.FindAsync(id);
+            //return await _context.Comments.FindAsync(id);
+            return await _context.Comments.Include(c => c.pictures).FirstOrDefaultAsync(c => c.Id == id);
         }
 
         // Créer un commentaire (possiblement le commentaire principal d'un post, mais pas forcément)
         // Un commentaire parent peut être fourni si le commentaire créé est un sous-commentaire
-        public async Task<Comment?> CreateComment(User user, string text, Comment? parentComment)
+        public async Task<Comment?> CreateComment(User user, string text, Comment? parentComment, List<IFormFile>? uploadedPictures)
         {
             if (IsContextNull()) return null;
+           
 
             Comment newComment = new Comment()
             {
@@ -33,7 +39,47 @@ namespace PostHubServer.Services
                 Date = DateTime.UtcNow,
                 User = user, // Auteur
                 ParentComment = parentComment, // null si commentaire principal du post
+
+                // Remplir la liste de photos
+                pictures = new List<Picture>(),
             };
+
+            if (uploadedPictures != null)
+            {
+                
+                foreach (var file in uploadedPictures)
+                {
+
+                    if (file != null && file.Length > 0)
+                    {
+                       
+                        
+                        Image image = Image.Load(file.OpenReadStream());
+
+                        Picture picture = new Picture
+                        {
+                            Id = 0,
+                            FileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName),
+                            MimeType = file.ContentType
+                        };
+
+
+                        string fullPath = Path.Combine(Directory.GetCurrentDirectory(), "images/full", picture.FileName);
+                        string thumbPath = Path.Combine(Directory.GetCurrentDirectory(), "images/thumbnail", picture.FileName);
+
+                        image.Save(fullPath);
+
+                        image.Mutate(i => i.Resize(
+                            new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }
+                        ));
+                        image.Save(thumbPath);
+                        _context.Pictures.Add(picture);
+                        newComment.pictures.Add(picture);
+                    }
+
+                }
+                await _context.SaveChangesAsync();
+            }
 
             _context.Comments.Add(newComment);
             await _context.SaveChangesAsync();
@@ -42,11 +88,17 @@ namespace PostHubServer.Services
         }
 
         // Modifier le texte d'un commentaire
-        public async Task<Comment?> EditComment(Comment comment, string text)
+        public async Task<Comment?> EditComment(Comment comment, string text, List<Picture>? uploadedPictures)
         {
-            comment.Text = text;
-            await _context.SaveChangesAsync();
+            if (IsContextNull()) return null;
+           comment.Text = text;
+            comment.pictures.AddRange(uploadedPictures);
+            
+                 
+            //comment.pictures.AddRange(uploadedPictures);
 
+            _context.Comments.Update(comment);
+            await _context.SaveChangesAsync();
             return comment;
         }
 
@@ -134,6 +186,47 @@ namespace PostHubServer.Services
 
             return true; // Basculement du downvote réussi
         }
+
+        public async Task<bool> Report(int id,User user)
+        {
+
+            if (IsContextNull()) return false;
+
+            Comment? comment = await _context.Comments.FindAsync(id);
+            if (comment == null) return false;
+            comment.Reporters ??= new List<User>();
+            if (comment.Reporters.Contains(user)) comment.Reporters.Remove(user);
+            else
+            {
+                comment.Reporters.Add(user);
+            }
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        public async Task<List<CommentDisplayDTO>> GetReportedCommentsAsDTOs(User? currentUser = null)
+        {
+            if (IsContextNull()) return new List<CommentDisplayDTO>();
+
+            List<Comment> reportedComments = await _context.Comments
+                .Include(c => c.Reporters)
+                .Include(c => c.User)
+                .Include(c => c.Upvoters)
+                .Include(c => c.Downvoters)
+                .Include(c => c.SubComments)
+                    .ThenInclude(sc => sc.User)
+                .Include(c => c.pictures)
+                .Where(c => c.Reporters.Count > 0)
+                .ToListAsync();
+
+            List<CommentDisplayDTO> dtos = reportedComments
+                .Select(c => new CommentDisplayDTO(c, withSubComments: true, user: currentUser))
+                .ToList();
+
+            return dtos;
+        }
+
+
+
 
         private bool IsContextNull() => _context == null || _context.Comments == null;
     }

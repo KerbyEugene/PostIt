@@ -25,13 +25,53 @@
       {{post.title}}
     </div>
   
-    <!-- Texte (et éventuellement images) du commentaire principal du post -->
+    <!-- Texte (et éventuellement images) du commentaire principal du post -->   
+   
     <div class="postContent">
       <div *ngIf="!toggleMainCommentEdit">{{post.mainComment!.text}}</div>
       <textarea id="commentTextEdit" *ngIf="toggleMainCommentEdit" type="text" [(ngModel)]="newMainCommentText"></textarea>
-      <div class="commentPictures">
-        <!-- Des images pourraient être affichées ici -->
-      </div>
+      <div class="commentPictures" >
+        <!-- Des images pourraient être affichées ici -->         
+
+        <div style="width: 100%" *ngIf="post.mainComment!.imageIds.length > 4">
+          <div class="glide">
+            <div class="glide__track" data-glide-el="track">
+              <ul class="glide__slides">
+                <li class="glide__slide" style="height: 200px;" *ngFor="let i of post.mainComment!.imageIds" #glideitems>
+                  <div class="picture-container">
+                 <a [href]="'https://localhost:7216/api/Comments/GetPicture/full/' + i"> <img [src]="'https://localhost:7216/api/Comments/GetPicture/full/' + i" alt="Picture" style="object-fit: cover; width: 100%; height: 100%;"> </a>
+                 <span class="close-button" *ngIf="isAuthor" (click)="deleteImage(i)">×</span>
+                </div>
+                </li>
+              </ul>
+            </div>
+
+            <div class="glide__arrows" data-glide-el="controls">
+              <div class="arrow glide__arrow glide__arrow--left" data-glide-dir="<">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="align-self: center;">
+                   <path d="M0 12l10.975 11 2.848-2.828-6.176-6.176H24v-3.992H7.646l6.176-6.176L10.975 1 0 12z"></path>
+                </svg>
+              </div>
+              <div class="arrow glide__arrow glide__arrow--right" data-glide-dir=">">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" style="align-self: center;">
+                     <path d="M13.025 1l-2.847 2.828 6.176 6.176h-16.354v3.992h16.354l-6.176 6.176 2.847 2.828 10.975-11z"></path>
+                  </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div *ngIf="post.mainComment!.imageIds.length <= 4">
+          <div class="picture-container" *ngFor="let i of post.mainComment!.imageIds">
+            <a [href]="'https://localhost:7216/api/Comments/GetPicture/full/' + i">
+            <img [src]="'https://localhost:7216/api/Comments/GetPicture/full/' + i" alt="Picture">
+          </a>
+            <span class="close-button" *ngIf="isAuthor" (click)="deleteImage(i)">×</span>
+          
+          </div>
+        </div>         
+      </div>      
+        
     </div>
   
     <!-- Boutons pour voter / modifier le commentaire principal du post -->
@@ -45,7 +85,7 @@
         <button><fa-icon [icon]="faMessage"></fa-icon> {{post.mainComment!.subCommentTotal}}</button>
       </div>
       <div>
-        <input *ngIf="toggleMainCommentEdit" type="file" accept="images/*" name="mainCommentPictures">
+        <input #myFile *ngIf="toggleMainCommentEdit" type="file" accept="images/*" name="mainCommentPictures" multiple>
       </div>
       <div>
         <button *ngIf="toggleMainCommentEdit" (click)="toggleMainCommentEdit = false">Annuler</button>
@@ -65,9 +105,9 @@
   
     <!-- Boîte pour créer un commentaire directement associé au commentaire principal de ce post -->
     <div id="commentBox">
-      <input type="text" name="newComment" id="newComment" placeholder="Ajouter un commentaire" [(ngModel)]="newComment">
+      <input  type="text" name="newComment" id="newComment" placeholder="Ajouter un commentaire" [(ngModel)]="newComment" >
       <div *ngIf="displayInputFile" class="commentPictureAdd">
-        <input type="file" accept="images/*" name="commentPictures">
+        <input #myFileInput type="file" accept="images/*" name="commentPictures" multiple>
       </div>
       <button (click)="displayInputFile = !displayInputFile"><fa-icon [icon]="faImage"></fa-icon></button>
       <button (click)="createComment()">Ajouter</button>

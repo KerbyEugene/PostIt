@@ -23,7 +23,6 @@ export class CommentService {
 
   // Créer un sous-commentaire (donc tous les commentaires qui ne sont pas le commentaire principal d'un post)
   async postComment(dto : any, parentCommentId : number) : Promise<Comment>{
-
     let x = await lastValueFrom(this.http.post<any>(domain + "api/Comments/PostComment/" + parentCommentId, dto));
     console.log(x);
     return x;
@@ -49,5 +48,18 @@ export class CommentService {
     let x = await lastValueFrom(this.http.put<any>(domain + "api/Comments/DownvoteComment/" + commentId, null));
     console.log(x);
   }
+  async deleteImage(imageId:Number)
+  {
+    let x = await lastValueFrom(this.http.delete<any>(domain + "api/Comments/DeletePicture/" + imageId));
+    console.log(x);
+  }
+
+  async report(commentId : number){
+    let x= await lastValueFrom(this.http.put<any>(domain + "api/Comments/ReportComment/" + commentId, null));
+    console.log(x);
+  }
+async getReportedComments(): Promise<Comment[]> {
+  return await lastValueFrom(this.http.get<Comment[]>(domain + "api/Comments/GetReportedComments/GetReportedComments"));
+}
 
 }

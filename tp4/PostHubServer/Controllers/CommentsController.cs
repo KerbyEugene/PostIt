@@ -6,6 +6,11 @@ using PostHubServer.Models.DTOs;
 using PostHubServer.Models;
 using PostHubServer.Services;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
+using System.Text.RegularExpressions;
+using System.ComponentModel.Design;
 
 namespace PostHubServer.Controllers
 {
@@ -13,30 +18,44 @@ namespace PostHubServer.Controllers
     [ApiController]
     public class CommentsController : ControllerBase
     {
+      
         private readonly UserManager<User> _userManager;
         private readonly PostService _postService;
         private readonly CommentService _commentService;
+        private readonly PictureService _pictureService;
+        
 
-        public CommentsController(UserManager<User> userManager, PostService postService, CommentService commentService)
+        public CommentsController(UserManager<User> userManager, PostService postService, CommentService commentService,PictureService pictureService)
         {
             _userManager = userManager;
             _postService = postService;
             _commentService = commentService;
+            _pictureService= pictureService;
         }
 
         // Créer un nouveau commentaire. (Ne permet pas de créer le commentaire principal d'un post, pour cela,
         // voir l'action PostPost dans PostsController)
         [HttpPost("{parentCommentId}")]
         [Authorize]
-        public async Task<ActionResult<CommentDisplayDTO>> PostComment(int parentCommentId, CommentDTO commentDTO)
+        public async Task<ActionResult<CommentDisplayDTO>> PostComment(int parentCommentId)
         {
             User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             if (user == null) return Unauthorized();
+            
+            string? text = HttpContext.Request.Form["text"];
+
+            if (text == null)
+                return BadRequest(new { Message = "Il manque des un comments !" });
+
+            IFormCollection formCollection = await Request.ReadFormAsync();
+            List<IFormFile> uploadedPictures = formCollection.Files.ToList();
+
+
 
             Comment? parentComment = await _commentService.GetComment(parentCommentId);
             if (parentComment == null || parentComment.User == null) return BadRequest();
 
-            Comment? newComment = await _commentService.CreateComment(user, commentDTO.Text, parentComment);
+            Comment? newComment = await _commentService.CreateComment(user, text, parentComment, uploadedPictures);
             if (newComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
             bool voteToggleSuccess = await _commentService.UpvoteComment(newComment.Id, user);
@@ -44,23 +63,79 @@ namespace PostHubServer.Controllers
 
             return Ok(new CommentDisplayDTO(newComment, false, user));
         }
-        
+
         // Modifier le texte d'un commentaire
         [HttpPut("{commentId}")]
         [Authorize]
-        public async Task<ActionResult<CommentDisplayDTO>> PutComment(int commentId, CommentDTO commentDTO)
+        public async Task<ActionResult<CommentDisplayDTO>> PutComment(int commentId)
         {
-            User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            try
+            {
+                // Get the authenticated user
+                User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                if (user == null) return Unauthorized();
 
-            Comment? comment = await _commentService.GetComment(commentId);
-            if (comment == null) return NotFound();
+                // Get the updated text and images from the request
+                IFormCollection formCollection = await Request.ReadFormAsync();
+                //IFormFile? file = formCollection.Files.GetFile("image");
 
-            if (user == null || comment.User != user) return Unauthorized();
+                
+                string? textString = Request.Form["text"];
 
-            Comment? editedComment = await _commentService.EditComment(comment, commentDTO.Text);
-            if (editedComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
+                //if (file == null || titleString == null || textString == null) return BadRequest(new { Message = "Il manque des morceaux" });
 
-            return Ok(new CommentDisplayDTO(editedComment, true, user));
+                List<Picture> pictures = new();
+
+                int i = 1;
+                foreach (var file in formCollection.Files)
+                {                   
+
+                    if (file.Length > 0)
+                    {
+
+                        var extension = Path.GetExtension(file.FileName);
+                        var uniqueName = Guid.NewGuid().ToString() + extension;
+                        var filenameWithIndex = $"img{i}_{uniqueName}";
+
+                        Image image = Image.Load(file.OpenReadStream());
+
+                        image.Save(Directory.GetCurrentDirectory() + "/images/full/" + filenameWithIndex);
+
+                        image.Mutate(i => i.Resize(
+                            new ResizeOptions() { Mode = ResizeMode.Min, Size = new Size() { Height = 200 } }));
+                        image.Save(Directory.GetCurrentDirectory() + "/images/thumbnail" + filenameWithIndex);
+
+                        pictures.Add(new Picture
+                        {
+                            Id = 0,
+                            FileName = filenameWithIndex,
+                            MimeType = file.ContentType
+                        });
+                        i++;
+                    }
+                }
+
+
+                // Retrieve the comment to be updated
+                Comment? comment = await _commentService.GetComment(commentId);
+                if (comment == null) return NotFound();
+
+                // Ensure the user is authorized to edit the comment
+                if (comment.User != user) return Unauthorized();
+
+                // Call the service to update the comment
+                Comment? editedComment = await _commentService.EditComment(comment, textString, pictures);
+                if (editedComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
+
+                // Return the updated comment
+                return Ok(new CommentDisplayDTO(editedComment, false, user));
+            }
+            catch (Exception ex)
+            {
+                // Log the exception and return a 500 error
+                Console.WriteLine($"Error in PutComment: {ex.Message}");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { Message = "An error occurred while updating the comment." });
+            }
         }
 
         // Upvoter (ou annuler l'upvote) un commentaire
@@ -100,11 +175,12 @@ namespace PostHubServer.Controllers
         public async Task<ActionResult> DeleteComment(int commentId)
         {
             User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            bool isAdmin = await _userManager.IsInRoleAsync(user, "moderateur");
 
             Comment? comment = await _commentService.GetComment(commentId);
             if (comment == null) return NotFound();
 
-            if (user == null || comment.User != user) return Unauthorized();
+            if (user == null || comment.User != user&& !isAdmin) return Unauthorized();
 
             // Cette boucle permet non-seulement de supprimer le commentaire lui-même, mais s'il possède
             // un commentaire parent qui a été soft-delete et qui n'a pas de sous-commentaires,
@@ -142,5 +218,58 @@ namespace PostHubServer.Controllers
 
             return Ok(new { Message = "Commentaire supprimé." });
         }
+
+        [HttpGet("{size}/{id}")]
+        public async Task<ActionResult<Picture>> GetPicture(string size, int id)
+        {
+            Picture? si = await _pictureService.GetPicture(id);
+            if (si == null) return NotFound();
+
+            // Si la size fournit ne correspond pas à "big" OU "smol", erreur.
+            if (!Regex.Match(size, "full|thumbnail").Success) return BadRequest(new { Message = "La taille demandée n'existe pas." });
+
+            // Récupération du fichier sur le disque
+            byte[] bytes = System.IO.File.ReadAllBytes(Directory.GetCurrentDirectory() + "/images/" + size + "/" + si.FileName);
+            return File(bytes, si.MimeType);
+        }
+
+        [HttpDelete("{id}")]
+        
+        
+        public async Task<IActionResult> DeletePicture(int id)
+        {
+            Picture? si = await _pictureService.GetPicture(id);
+            if (si == null) return NotFound(new { Message = "Aucune image trouvée avec cet id." });
+
+            // Supprimer toutes les éventuelles tailles existantes du disque
+            System.IO.File.Delete(Directory.GetCurrentDirectory() + "/images/Full/" + si.FileName);
+            System.IO.File.Delete(Directory.GetCurrentDirectory() + "/images/thumbnail/" + si.FileName);
+
+           await _pictureService.RemovePicture(id);
+
+            return Ok();
+        }
+        [HttpPut("{id}")]
+        [Authorize]
+        public async Task<IActionResult> ReportComment(int id)
+        {
+            User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            if (user == null) return BadRequest();
+            bool Report = await _commentService.Report(id, user);
+            if (!Report) return StatusCode(StatusCodes.Status500InternalServerError);
+            return Ok(new { Message = "Report complété." });
+        }
+
+        [HttpGet("GetReportedComments")]
+        [Authorize(Roles = "moderateur")]
+        public async Task<ActionResult<List<CommentDisplayDTO>>> GetReportedComments()
+        {
+            // Optionnel : récupérer l'utilisateur courant s'il est connecté
+            var user = await _userManager.GetUserAsync(User);
+
+            var reportedDTOs = await _commentService.GetReportedCommentsAsDTOs(user);
+            return Ok(reportedDTOs);
+        }
+
     }
 }

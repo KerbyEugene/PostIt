@@ -27,9 +27,13 @@
               }
             ],
             "styles": [
-              "src/styles.css"
+              "./node_modules/@glidejs/glide/dist/css/glide.core.min.css", 
+              "./node_modules/@glidejs/glide/dist/css/glide.theme.min.css", 
+              "src/styles.css"               
             ],
-            "scripts": []
+            "scripts": [
+              "./node_modules/@glidejs/glide/dist/glide.min.js" 
+            ]
           },
           "configurations": {
             "production": {
@@ -92,5 +96,8 @@
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

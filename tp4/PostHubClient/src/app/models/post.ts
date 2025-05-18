@@ -6,6 +6,7 @@ export class Post{
         public title : string,
         public hubId : number,
         public hubName : string,
-        public mainComment : Comment | null
+        public mainComment : Comment | null,
+        public pictureIds : number [] 
     ){}
 }

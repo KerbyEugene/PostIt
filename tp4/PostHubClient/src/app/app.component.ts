@@ -6,6 +6,7 @@ import { faChevronDown, faChevronUp, faMagnifyingGlass, faRightFromBracket, faRi
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
+import { UserService } from './services/user.service';
 
 
 @Component({
@@ -16,6 +17,8 @@ import { FontAwesomeModule } from '@fortawesome/angular-fontawesome';
   styleUrl: './app.component.css'
 })
 export class AppComponent {
+
+  
 
   faMagnifyingGlass = faMagnifyingGlass;
   faStar = faStar;
@@ -28,8 +31,16 @@ export class AppComponent {
   hubsToggled : boolean = false;
   hubList : Hub[] = [];
 
-  constructor(public hubService : HubService){}
+  constructor(public hubService : HubService,public userservice : UserService){}
+  async ngOnInit(): Promise<void> {
+    
+  
+    
+    let rolesJSON : string | null = localStorage.getItem("roles");
+    if(rolesJSON != null) this.userservice.setRoles(JSON.parse(rolesJSON));
 
+  }
+ 
   async toggleHubs(){
     this.faChevronDown = this.faChevronDown == faChevronDown ? faChevronUp : faChevronDown;
     this.hubsToggled = !this.hubsToggled;

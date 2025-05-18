@@ -1,4 +1,5 @@
 ﻿
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -6,6 +7,8 @@ using PostHubServer.Models;
 using PostHubServer.Models.DTOs;
 using PostHubServer.Services;
 using System.Security.Claims;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 
 namespace PostHubServer.Controllers
 {
@@ -30,25 +33,46 @@ namespace PostHubServer.Controllers
         // et le post lui-même.
         [HttpPost("{hubId}")]
         [Authorize]
-        public async Task<ActionResult<PostDisplayDTO>> PostPost(int hubId, PostDTO postDTO)
+        public async Task<ActionResult<Picture>> PostPost(int hubId)
         {
-            User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            if (user == null) return Unauthorized();
+            try
+            {
+                IFormCollection formCollection = await Request.ReadFormAsync();
 
-            Hub? hub = await _hubService.GetHub(hubId);
-            if (hub == null) return NotFound();
+                string? titleString = Request.Form["title"];
+                string? textString = Request.Form["text"];
 
-            Comment? mainComment = await _commentService.CreateComment(user, postDTO.Text, null);
-            if (mainComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
+                if (titleString == null || textString == null) return BadRequest(new { Message = "Il manque des morceaux" });
+                
+                List<IFormFile> uploadedPictures = formCollection.Files.ToList();
 
-            Post? post = await _postService.CreatePost(postDTO.Title, hub, mainComment);
-            if (post == null) return StatusCode(StatusCodes.Status500InternalServerError);
 
-            bool voteToggleSuccess = await _commentService.UpvoteComment(mainComment.Id, user);
-            if (!voteToggleSuccess) return StatusCode(StatusCodes.Status500InternalServerError);
+                User? user = await _userManager.FindByIdAsync(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                if (user == null) return Unauthorized();
 
-            return Ok(new PostDisplayDTO(post, true, user));
+                ////Comment? parentComment = await _commentService.GetComment(hubId);
+                ////if (parentComment == null || parentComment.User == null) return BadRequest();
+
+                Hub? hub = await _hubService.GetHub(hubId);
+                if (hub == null) return NotFound();
+
+                Comment? mainComment = await _commentService.CreateComment(user, textString, null, uploadedPictures);
+                if (mainComment == null) return StatusCode(StatusCodes.Status500InternalServerError);
+
+                Post? post = await _postService.CreatePost(titleString, hub, mainComment);
+                if (post == null) return StatusCode(StatusCodes.Status500InternalServerError);
+
+                bool voteToggleSuccess = await _commentService.UpvoteComment(mainComment.Id, user);
+                if (!voteToggleSuccess) return StatusCode(StatusCodes.Status500InternalServerError);
+
+                return Ok(new PostDisplayDTO(post, true, user));
+            }
+            catch (Exception)
+            {
+                throw;
+            }
         }
+           
 
         /// <summary>
         /// Obtenir une list de posts selon certains critères

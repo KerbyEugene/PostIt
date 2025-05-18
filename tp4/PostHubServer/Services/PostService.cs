@@ -20,7 +20,9 @@ namespace PostHubServer.Services
                 MainComment = mainComment,
                 MainCommentId = mainComment.Id,
                 Hub = hub
+
             };
+            
             _context.Posts.Add(newPost);
             await _context.SaveChangesAsync();
             return newPost;

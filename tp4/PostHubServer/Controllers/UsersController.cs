@@ -1,12 +1,18 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using PostHubServer.Migrations;
 using PostHubServer.Models;
 using PostHubServer.Models.DTOs;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Processing;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace PostHubServer.Controllers
 {
@@ -40,6 +46,7 @@ namespace PostHubServer.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new { Message = "La création de l'utilisateur a échoué." });
             }
+
             return Ok(new { Message = "Inscription réussie ! 🥳" });
         }
 
@@ -47,6 +54,11 @@ namespace PostHubServer.Controllers
         public async Task<ActionResult> Login(LoginDTO login)
         {
             User? user = await _userManager.FindByNameAsync(login.Username);
+            if(user == null)
+            {
+                user = await _userManager.FindByEmailAsync(login.Username);
+            }
+            
             if (user != null && await _userManager.CheckPasswordAsync(user, login.Password))
             {
                 IList<string> roles = await _userManager.GetRolesAsync(user);
@@ -69,7 +81,8 @@ namespace PostHubServer.Controllers
                 {
                     token = new JwtSecurityTokenHandler().WriteToken(token),
                     validTo = token.ValidTo,
-                    username = user.UserName // Ceci sert déjà à afficher / cacher certains boutons côté Angular
+                    username = user.UserName,
+                    roles = roles   // <--- ajout ici// Ceci sert déjà à afficher / cacher certains boutons côté Angular
                 });
             }
             else
@@ -77,6 +90,75 @@ namespace PostHubServer.Controllers
                 return StatusCode(StatusCodes.Status400BadRequest,
                     new { Message = "Le nom d'utilisateur ou le mot de passe est invalide." });
             }
+        }
+
+        [HttpPut]
+        public async Task<ActionResult<Picture>> ChangeAvatar()
+        {
+
+            var user = await _userManager.GetUserAsync(User);            
+
+            IFormCollection formCollection = await Request.ReadFormAsync();
+            IFormFile? file = formCollection.Files.GetFile("monImage"); // ⛔ Même clé que dans le FormData 😠
+
+            if (file == null) return BadRequest(new { Message = "Fournis une image, niochon" });
+
+            Image image = Image.Load(file.OpenReadStream());
+
+
+            user.FileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+            user.MimeType = file.ContentType;
+               
+
+
+            // ⛔ Ce dossier (projet/images/big) DOIT déjà exister 📂 !! Créez-le d'abord !
+            image.Save(Directory.GetCurrentDirectory() + "/images/avatar/" + user.FileName);
+
+           
+               
+            await _userManager.UpdateAsync(user);
+                 
+
+            // La seule chose dont le client pourrait avoir besoin, c'est l'id de l'image.
+            // On aurait pu ne rien retourner aussi, selon les besoins du client Angular.
+            return Ok();
+     
+        }
+        [HttpGet("{size}/{username}")]
+        public async Task<ActionResult<Picture>> GetAvatar(string size, string username)
+        {
+            var user = await _userManager.FindByNameAsync(username);
+            if (user == null) return NotFound();
+
+            // Si la size fournit ne correspond pas à "big" OU "smol", erreur.
+            if (!Regex.Match(size, "Avatar|thumbnail").Success) return BadRequest(new { Message = "La taille demandée n'existe pas." });
+
+            // Récupération du fichier sur le disque
+            byte[] bytes = System.IO.File.ReadAllBytes(Directory.GetCurrentDirectory() + "/images/" + size + "/" + user.FileName);
+            return File(bytes, user.MimeType);
+        }
+
+        [HttpPut]
+        public async Task<ActionResult> ChangePassword(ChangePasswordDTO changePW)
+        {
+            var user = await _userManager.GetUserAsync(User);
+            if (user == null) return Unauthorized();
+
+            await _userManager.ChangePasswordAsync(user, changePW.OldPassword, changePW.NewPassword);            
+            return Ok();            
+        }
+
+        [HttpPut("{username}")]
+        [Authorize(Roles = "admin")]
+        public async Task<IActionResult> MakeModerator(string userName)
+        {
+            User? newModerateur = await _userManager.FindByNameAsync(userName);
+            if (newModerateur == null) return NotFound(new { Message = "Cet utilisateur n'existe pas. 👻" });
+            if (await _userManager.IsInRoleAsync(newModerateur, "moderateur"))
+                return BadRequest(new { message = "L'utilisateur est déjà modérateur" });
+
+            await _userManager.AddToRoleAsync(newModerateur, "moderateur");
+            return Ok(new { Message = userName = " est maintenant rédacteur / rédactrice ! ✍" });
         }
     }
 }
